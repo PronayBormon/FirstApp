@@ -16,12 +16,18 @@ class Homepage extends StatelessWidget {
         centerTitle: true,
         elevation: 2.0,
         shadowColor: Colors.black,
-        backgroundColor:
-            Color.fromRGBO(255, 31, 104, 1.0), // Full opacity (1.0)
+        backgroundColor: Color.fromRGBO(41, 45, 46, 1),
+        // Color.fromRGBO(255, 31, 104, 1.0), // Full opacity (1.0)
         leading: Container(
           decoration: BoxDecoration(
-            color: Colors.amber[100],
+            // color: Colors.amber[100],
             borderRadius: BorderRadius.circular(5),
+          ),
+          child: Image.asset(
+            'assets/images/logo.png',
+            height: 90, // Set the height of the image
+            width: 90, // Set the width of the image
+            fit: BoxFit.contain,
           ),
         ),
       ),
