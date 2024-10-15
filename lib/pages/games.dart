@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'authentication/signin.dart';
-import 'games.dart';
+import './authentication/signin.dart';
 import './components/Sidebar.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
@@ -16,8 +15,10 @@ final List<String> imgList = [
   'https://images.unsplash.com/photo-1519985176271-adb1088fa94c?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=a0c8d632e977f94e5d312d9893258f59&auto=format&fit=crop&w=1355&q=80'
 ];
 
-class Homepage extends StatelessWidget {
-  const Homepage({super.key});
+class GamesPage extends StatelessWidget {
+  const GamesPage({super.key, required this.subcategoryName});
+
+  final String subcategoryName; // Ensure this is defined
 
   @override
   Widget build(BuildContext context) {
@@ -25,20 +26,23 @@ class Homepage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        // title: Text('Home', style: TextStyle(color: Colors.white)),
+        title: Text('Games',
+            style: TextStyle(
+              color: mainColor,
+            )),
         centerTitle: true,
         elevation: 2.0,
         shadowColor: Colors.black,
         backgroundColor: Color.fromRGBO(41, 45, 46, 1),
         leading: GestureDetector(
           onTap: () {
-            Homepage(); // Uncomment to enable back function
+            Navigator.pop(context); // Uncomment to enable back function
           },
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Image.asset(
-              'assets/images/logo.png',
-              // color: Colors.white,
+            child: SvgPicture.asset(
+              'assets/icons/chevron-left.svg',
+              color: Colors.white,
               height: 25,
               width: 25,
             ),
@@ -67,65 +71,6 @@ class Homepage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Search Field
-            Container(
-              margin: EdgeInsets.only(
-                top: 30,
-                left: 20,
-                right: 20,
-              ),
-              decoration: BoxDecoration(
-                color: Color.fromRGBO(255, 31, 104, 1.0),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search...', // Add your placeholder text here
-                  hintStyle: TextStyle(
-                    color: Colors.grey, // Optional: customize hint text color
-                  ),
-                  prefixIcon: Padding(
-                    padding:
-                        const EdgeInsets.all(10), // Adjust padding for icon
-                    child: SvgPicture.asset(
-                      'assets/icons/search.svg',
-                      color: Color.fromRGBO(255, 31, 104, 1.0),
-                      height: 20, // Increased icon size for visibility
-                      width: 20,
-                    ),
-                  ),
-                  suffixIcon: GestureDetector(
-                    onTap: () {
-                      print('Search');
-                    },
-                    child: Container(
-                      padding: EdgeInsets.only(
-                          left: 10, right: 10), // Padding for button
-                      child: ElevatedButton(
-                        onPressed: () {
-                          print("object");
-                        },
-                        style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          backgroundColor: Colors.white,
-                          textStyle: const TextStyle(
-                            color: Color.fromRGBO(255, 31, 104, 1),
-                          ),
-                        ),
-                        child: const Text('Search'),
-                      ),
-                    ),
-                  ),
-                  filled: true,
-                  fillColor: const Color.fromARGB(255, 255, 255, 255),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(5),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-
             //like a banner or card
             Container(
               // height: 300,
@@ -154,59 +99,7 @@ class Homepage extends StatelessWidget {
                     .toList(),
               )),
             ),
-            ContainerTitle(
-                title: 'Popular categories', viewAllLink: "Category Link"),
-            Container(
-              // height: 300, // Set the desired height for the main container
-              // color: Colors.white, // Background color for the main container
-              padding: const EdgeInsets.only(
-                top: 20,
-                right: 20,
-                left: 20,
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    height: 80,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: 12,
-                      scrollDirection: Axis.horizontal,
-                      itemBuilder: (_, index) {
-                        return GestureDetector(
-                          onTap: () {
-                            // Define action on post tap (e.g., navigate to a detailed view)
-                            print("Category $index tapped!");
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 5.0), // Spacing between items
-                            child: ClipOval(
-                              child: Container(
-                                width: 80,
-                                height: 80,
-                                // padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue[50],
-                                  borderRadius: BorderRadius.circular(100),
-                                ),
-                                child: Image.asset(
-                                  'assets/images/category/01.jpg',
-                                  fit: BoxFit.cover,
-                                ), // Optional: Add content to the circle
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // GridView Title
-            ContainerTitle(title: 'Games', viewAllLink: "GamesPage()"),
+            ContainerTitle(title: 'Games'),
 
             // GridView of Posts
             Container(
@@ -240,7 +133,7 @@ class Homepage extends StatelessWidget {
                   mainAxisSpacing: 10, // Spacing between rows
                   childAspectRatio: 0.8, // Adjust item height/width ratio
                 ),
-                itemCount: 12, // Number of grid items (posts)
+                itemCount: 102, // Number of grid items (posts)
                 itemBuilder: (context, index) {
                   return GestureDetector(
                     onTap: () {
@@ -286,52 +179,32 @@ class Homepage extends StatelessWidget {
 }
 
 class ContainerTitle extends StatelessWidget {
-  final String title; // Declare the title variable
-  final String viewAllLink; // Declare the viewAllLink variable
+  final String title;
 
   const ContainerTitle({
     Key? key,
-    required this.title, // Use 'required this.title' to assign the parameter
-    required this.viewAllLink, // Use 'required this.viewAllLink' to assign the parameter
+    required this.title,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 1000,
+      width: double.infinity,
       margin: const EdgeInsets.only(top: 10),
       padding: EdgeInsets.only(
         top: 8.0,
         left: 20.0,
         right: 20.0,
         bottom: 1.0,
-      ), // Optional: add padding for better spacing
+      ),
       child: Row(
-        mainAxisAlignment:
-            MainAxisAlignment.spaceBetween, // Space between title and link
         children: [
           Text(
             title,
             style: TextStyle(
-              color: Colors.white,
+              color: mainColor,
               fontSize: 16,
               fontWeight: FontWeight.w600,
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => GamesPage()),
-              );
-            },
-            child: Text(
-              'View All',
-              style: TextStyle(
-                color: mainColor, // Change color to indicate it's a link
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-              ),
             ),
           ),
         ],

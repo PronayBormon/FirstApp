@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:homepage_project/pages/components/Sidebar.dart';
+import '../HomePage.dart';
 
 class SignIn extends StatelessWidget {
   const SignIn({super.key});
@@ -35,33 +37,32 @@ class SignIn extends StatelessWidget {
             ),
           ),
         ),
+
         actions: [
-          GestureDetector(
-            onTap: () {
-              // Define your action here
-              print("Menu tapped!");
-              // You can navigate to another screen here, for example:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        SignIn()), // Example navigation to a "MenuPage"
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(right: 10.0),
-              child: SvgPicture.asset(
-                'assets/icons/menu.svg', // Example SVG asset for menu
+          Builder(
+            builder: (context) => IconButton(
+              icon: SvgPicture.asset(
+                'assets/icons/menu.svg',
                 color: Colors.white,
                 height: 25,
                 width: 25,
               ),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
             ),
           ),
         ],
       ),
+      drawer: OffcanvasMenu(),
+      backgroundColor: Color.fromRGBO(35, 38, 38, 1),
       body: Center(
-        child: Text('Welcome to Signin Page'),
+        child: Text(
+          'Welcome to Signin Page',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }

@@ -1,0 +1,31 @@
+[
+    {
+      "id": 1,
+      "name": "Action",
+      "subcategories": [
+        { "id": 1, "name": "Shooter" },
+        { "id": 2, "name": "Fighting" }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Adventure",
+      "subcategories": [
+        { "id": 3, "name": "Platformer" },
+        { "id": 4, "name": "Open World" }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Puzzle",
+      "subcategories": [
+        { "id": 5, "name": "Logic" },
+        { "id": 6, "name": "Matching" }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "RPG"
+    }
+  ]
+  
