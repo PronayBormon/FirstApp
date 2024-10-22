@@ -1,46 +1,25 @@
-import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/HomePage.dart';
+import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/user/profile.dart';
-import 'package:homepage_project/pages/user/wallet.dart';
-import '../model/category.dart';
-import './components/Sidebar.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:homepage_project/helper/constant.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 
-class AllCats extends StatefulWidget {
-  const AllCats({super.key});
+class HosterListPage extends StatefulWidget {
+  const HosterListPage({super.key});
 
   @override
-  _AllCatsState createState() => _AllCatsState();
+  _HosterListPageState createState() => _HosterListPageState();
 }
 
-class _AllCatsState extends State<AllCats> {
-  List<Category> categories = [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadCategories();
-  }
-
-  Future<void> loadCategories() async {
-    final String response =
-        await rootBundle.loadString('assets/categories.json');
-    final List<dynamic> data = json.decode(response);
-    setState(() {
-      categories = data.map((json) => Category.fromJson(json)).toList();
-    });
-  }
-
-  int _selectedIndex = 1; // Default to Home
-
+class _HosterListPageState extends State<HosterListPage> {
+  int _selectedIndex = 2;
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index; // Update the selected index
+      _selectedIndex = index;
     });
 
     // Handle navigation logic
@@ -56,21 +35,22 @@ class _AllCatsState extends State<AllCats> {
         // Stay on Homepage
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => WalletPage()),
+          MaterialPageRoute(builder: (context) => const GamesPage()),
         );
         break;
       case 2:
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => ProfilePage()), // Example for Profile
+              builder: (context) =>
+                  const HosterListPage()), // Example for Profile
         );
         break;
       case 3:
         // Navigate to Settings page
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const Homepage()),
+          MaterialPageRoute(builder: (context) => ProfilePage()),
         );
         break;
     }
@@ -78,16 +58,20 @@ class _AllCatsState extends State<AllCats> {
 
   @override
   Widget build(BuildContext context) {
+    // Use build method here
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories', style: TextStyle(color: mainColor)),
+        title: const Text('Hoster List',
+            style: TextStyle(
+              color: mainColor,
+            )),
         centerTitle: true,
         elevation: 2.0,
         shadowColor: Colors.black,
         backgroundColor: const Color.fromRGBO(41, 45, 46, 1),
         leading: GestureDetector(
           onTap: () {
-            Navigator.pop(context);
+            Navigator.pop(context); // Uncomment to enable back function
           },
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -115,6 +99,7 @@ class _AllCatsState extends State<AllCats> {
           ),
         ],
       ),
+      // Drawer here
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(
@@ -147,54 +132,13 @@ class _AllCatsState extends State<AllCats> {
         ),
       ),
       backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const ContainerTitle(title: 'All Categories'),
-            ...categories.map((category) {
-              return ListTile(
-                title: Text(category.name,
-                    style: const TextStyle(color: Colors.white)),
-                onTap: () {
-                  // Navigate to GamesPage without subcategoryName
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          const GamesPage(), // No subcategoryName
-                    ),
-                  );
-                },
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ContainerTitle extends StatelessWidget {
-  final String title;
-
-  const ContainerTitle({
-    super.key,
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.all(20.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: mainColor,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+      body: const Center(
+        child: Text(
+          'Hoster List Page',
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ), // Example body content
       ),
     );
   }

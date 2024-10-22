@@ -3,8 +3,9 @@ import 'package:homepage_project/pages/categories.dart';
 import '../HomePage.dart';
 import '../authentication/signin.dart';
 import '../authentication/signup.dart';
-import '../authentication/profile.dart';
-import '../categories.dart';
+import '../user/profile.dart';
+
+// import '../games.dart';
 import '../games.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
@@ -17,14 +18,12 @@ class OffcanvasMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      // backgroundColor: Color.fromRGBO(41, 45, 46, 1),
-
-      backgroundColor: Color.fromRGBO(35, 38, 38, 1),
+      backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          Padding(
-              padding: const EdgeInsets.only(
+          const Padding(
+              padding: EdgeInsets.only(
             top: 30.0,
             left: 15.0,
             right: 15.0,
@@ -41,7 +40,7 @@ class OffcanvasMenu extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (context) =>
-                        Homepage()), // Example navigation to a "MenuPage"
+                        const Homepage()), // Example navigation to a "MenuPage"
               );
             },
           ),
@@ -56,7 +55,7 @@ class OffcanvasMenu extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (context) =>
-                        GamesPage()), // Example navigation to a "MenuPage"
+                        const GamesPage()), // Example navigation to a "MenuPage"
               );
             },
           ),
@@ -71,7 +70,7 @@ class OffcanvasMenu extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (context) =>
-                        AllCats()), // Example navigation to a "MenuPage"
+                        const AllCats()), // Example navigation to a "MenuPage"
               );
             },
           ),
@@ -98,7 +97,7 @@ class OffcanvasMenu extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => SignIn(),
+                  builder: (context) => const SignIn(),
                 ), // Example navigation to a "MenuPage"
               );
             },
@@ -111,7 +110,7 @@ class OffcanvasMenu extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => SignUp(),
+                  builder: (context) => const SignUp(),
                 ), // Example navigation to a "MenuPage"
               );
             },

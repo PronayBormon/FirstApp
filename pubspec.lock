@@ -107,6 +107,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.2"
+  http_log:
+    dependency: "direct main"
+    description:
+      name: http_log
+      sha256: daeef32d01cca3b95960d4b973d9c47ccdd0560a06069a031335c36a0718f732
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.1"
   http_parser:
     dependency: transitive
     description:

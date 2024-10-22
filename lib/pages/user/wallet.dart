@@ -1,41 +1,20 @@
-import 'dart:convert';
-import 'package:homepage_project/pages/HomePage.dart';
-import 'package:homepage_project/pages/games.dart';
-import 'package:homepage_project/pages/user/profile.dart';
-import 'package:homepage_project/pages/user/wallet.dart';
-import '../model/category.dart';
-import './components/Sidebar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:homepage_project/pages/HomePage.dart';
+import 'package:homepage_project/pages/components/Sidebar.dart';
+import 'package:homepage_project/pages/user/profile.dart';
+import 'package:homepage_project/pages/games.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 
-class AllCats extends StatefulWidget {
-  const AllCats({super.key});
+class WalletPage extends StatefulWidget {
+  const WalletPage({super.key});
 
   @override
-  _AllCatsState createState() => _AllCatsState();
+  _WalletpageState createState() => _WalletpageState();
 }
 
-class _AllCatsState extends State<AllCats> {
-  List<Category> categories = [];
-
-  @override
-  void initState() {
-    super.initState();
-    loadCategories();
-  }
-
-  Future<void> loadCategories() async {
-    final String response =
-        await rootBundle.loadString('assets/categories.json');
-    final List<dynamic> data = json.decode(response);
-    setState(() {
-      categories = data.map((json) => Category.fromJson(json)).toList();
-    });
-  }
-
+class _WalletpageState extends State<WalletPage> {
   int _selectedIndex = 1; // Default to Home
 
   void _onItemTapped(int index) {
@@ -73,6 +52,8 @@ class _AllCatsState extends State<AllCats> {
           MaterialPageRoute(builder: (context) => const Homepage()),
         );
         break;
+      case 4:
+        break;
     }
   }
 
@@ -80,14 +61,17 @@ class _AllCatsState extends State<AllCats> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Categories', style: TextStyle(color: mainColor)),
+        title: const Text('Wallet',
+            style: TextStyle(
+              color: mainColor,
+            )),
         centerTitle: true,
         elevation: 2.0,
         shadowColor: Colors.black,
         backgroundColor: const Color.fromRGBO(41, 45, 46, 1),
         leading: GestureDetector(
           onTap: () {
-            Navigator.pop(context);
+            Navigator.pop(context); // Enable back function
           },
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -147,27 +131,12 @@ class _AllCatsState extends State<AllCats> {
         ),
       ),
       backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const ContainerTitle(title: 'All Categories'),
-            ...categories.map((category) {
-              return ListTile(
-                title: Text(category.name,
-                    style: const TextStyle(color: Colors.white)),
-                onTap: () {
-                  // Navigate to GamesPage without subcategoryName
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          const GamesPage(), // No subcategoryName
-                    ),
-                  );
-                },
-              );
-            }),
-          ],
+      body: const Center(
+        child: Text(
+          "Wallet Page",
+          style: TextStyle(
+            color: Colors.white,
+          ),
         ),
       ),
     );
@@ -176,26 +145,64 @@ class _AllCatsState extends State<AllCats> {
 
 class ContainerTitle extends StatelessWidget {
   final String title;
+  final String viewAllLink;
 
   const ContainerTitle({
     super.key,
     required this.title,
+    required this.viewAllLink,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
       margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.all(20.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: mainColor,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GamesPage()),
+              );
+            },
+            child: Text(
+              viewAllLink,
+              style: const TextStyle(
+                color: mainColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
+}
+
+Widget _allItems(String catName) {
+  return ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      elevation: 2,
+      backgroundColor: Colors.teal,
+    ),
+    onPressed: () {
+      // Add your onPressed function here
+    },
+    child: Text(
+      catName,
+      style: const TextStyle(color: Colors.white),
+    ),
+  );
 }
