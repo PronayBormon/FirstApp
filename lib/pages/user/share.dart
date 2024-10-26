@@ -100,9 +100,9 @@ class SharePage extends StatelessWidget {
     Clipboard.setData(ClipboardData(text: link)).then((_) {
       // Show a snackbar to indicate that the link has been copied
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Successfully copied to clipboard!'),
-          duration: const Duration(seconds: 2),
+        const SnackBar(
+          content: Text('Successfully copied to clipboard!'),
+          duration: Duration(seconds: 2),
         ),
       );
     });

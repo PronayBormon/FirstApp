@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:homepage_project/pages/HomePage.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -60,16 +61,24 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             _buildTextField(
                 'Confirm New Password', _confirmPasswordController, true),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _changePassword,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: mainColor,
+            Container(
+              decoration: BoxDecoration(
+                gradient: pinkGradient,
+                borderRadius:
+                    BorderRadius.circular(50), // Optional: for rounded corners
               ),
-              child: const Text(
-                'Change Password',
-                style: TextStyle(color: Colors.white),
+              child: ElevatedButton(
+                onPressed: _changePassword,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Change Password',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-            ),
+            )
           ],
         ),
       ),

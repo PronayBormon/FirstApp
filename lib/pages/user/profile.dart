@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
+import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/user/about.dart';
 import 'package:homepage_project/pages/user/affiliate.dart';
@@ -9,6 +10,11 @@ import 'package:homepage_project/pages/user/deposit.dart';
 import 'package:homepage_project/pages/user/notification.dart';
 import 'package:homepage_project/pages/user/personal-details.dart';
 import 'package:homepage_project/pages/user/security.dart';
+import 'package:homepage_project/pages/user/security/change-password.dart';
+import 'package:homepage_project/pages/user/security/login-activitiy.dart';
+import 'package:homepage_project/pages/user/security/privacy-setings.dart';
+import 'package:homepage_project/pages/user/security/security-question.dart';
+import 'package:homepage_project/pages/user/security/twofactor.dart';
 import 'package:homepage_project/pages/user/share.dart';
 import 'package:homepage_project/pages/user/transections.dart';
 import 'package:homepage_project/pages/user/wallet.dart';
@@ -18,7 +24,10 @@ const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
 const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
 const pinkGradient = LinearGradient(
-  colors: [Color.fromRGBO(228, 62, 229, 1), Color.fromRGBO(229, 15, 112, 1)],
+  colors: [
+    Color.fromRGBO(228, 62, 229, 1),
+    Color.fromRGBO(229, 15, 112, 1),
+  ],
 );
 
 class ProfilePage extends StatefulWidget {
@@ -33,18 +42,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex = index; // Update the selected index
+      _selectedIndex = index;
     });
 
-    // Handle navigation logic
     List<Widget> pages = [
       const Homepage(),
-      WalletPage(),
+      // const GamesPage(),
       const HosterListPage(),
       const ProfilePage(),
     ];
 
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => pages[index]),
     );
@@ -76,18 +84,16 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
+          IconButton(
+            icon: SvgPicture.asset(
+              'assets/icons/menu.svg',
+              color: Colors.white,
+              height: 25,
+              width: 25,
             ),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
           ),
         ],
       ),
@@ -113,32 +119,32 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       ),
       backgroundColor: primaryColor,
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Profile Picture and User Info
-            Row(
+            const Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 30,
                   backgroundImage: AssetImage('assets/images/Avatar_image.png'),
                 ),
-                const SizedBox(width: 15),
+                SizedBox(width: 15),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       userName,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.bold),
                     ),
                     Text(
                       'User ID: $userId',
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(color: Colors.white, fontSize: 16),
                     ),
                   ],
                 ),
@@ -149,49 +155,113 @@ class _ProfilePageState extends State<ProfilePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _actionButton(context, 'Withdraw', WithdrawPage()),
+                _actionButton(context, 'Withdraw', const WithdrawPage()),
                 const SizedBox(width: 15),
-                _actionButton(context, 'Deposit', DepositPage()),
+                _actionButton(context, 'Deposit', const DepositPage()),
               ],
             ),
             const SizedBox(height: 20),
-            // Options Grid
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 4,
-                childAspectRatio: 1,
-                crossAxisSpacing: 3,
-                mainAxisSpacing: 3,
-                children: [
-                  _gridItem(context, Icons.account_balance_wallet, 'Wallet',
-                      WalletPage()),
-                  _gridItem(context, Icons.upload, 'Deposit', DepositPage()),
-                  _gridItem(
-                      context, Icons.download, 'Withdraw', WithdrawPage()),
-                  _gridItem(context, Icons.star, 'Bonus', const Homepage()),
-                  _gridItem(
-                      context, Icons.history, 'Transactions', Transection()),
-                ],
-              ),
-            ),
-            const Text('Settings',
+            // Profile Information Section
+            const Text('Profile Information',
                 style: TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            Column(
+            // Options Grid for Profile Information
+            // GridView.count(
+            //   shrinkWrap: true,
+            //   physics: const NeverScrollableScrollPhysics(),
+            //   crossAxisCount: 4,
+            //   childAspectRatio: 1,
+            //   crossAxisSpacing: 3,
+            //   mainAxisSpacing: 3,
+            //   children: const [],
+            // ),
+            const SizedBox(height: 10),
+            // Options Grid for Balance
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 4,
+              childAspectRatio: 1,
+              crossAxisSpacing: 3,
+              mainAxisSpacing: 3,
               children: [
-                _listTile(context, Icons.person, 'Personal Details',
-                    PersonalDetails()),
-                _listTile(context, Icons.security, 'Security', SecurityPage()),
-                _listTile(context, Icons.share, 'Share', SharePage()),
-                _listTile(context, Icons.groups, 'Affiliate', AffiliatePage()),
-                _listTile(context, Icons.notifications, 'Notifications',
-                    NotificationPage()),
-                _listTile(context, Icons.info, 'About', AboutPage()),
+                _gridItem(context, Icons.person, 'Personal Details',
+                    const PersonalDetails()),
+                _gridItem(context, Icons.account_balance_wallet, 'Wallet',
+                    const WalletPage()),
+                _gridItem(
+                    context, Icons.upload, 'Deposit', const DepositPage()),
+                _gridItem(
+                    context, Icons.download, 'Withdraw', const WithdrawPage()),
+                _gridItem(context, Icons.star, 'Bonus', const Homepage()),
+                _gridItem(context, Icons.history, 'Transactions',
+                    const Transection()),
               ],
             ),
+
+            // Profile Information Section
+            const Text('Security',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            // Options Grid for Profile Information
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 4,
+              childAspectRatio: 1,
+              crossAxisSpacing: 3,
+              mainAxisSpacing: 3,
+              children: const [],
+            ),
+            const SizedBox(height: 10),
+            // Options Grid for Balance
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 4,
+              childAspectRatio: 1.2,
+              crossAxisSpacing: 3,
+              mainAxisSpacing: 3,
+              children: [
+                _gridItem(context, Icons.lock, '2FA',
+                    const TwoFactorAuthenticationPage()),
+                _gridItem(context, Icons.password, 'Change Password',
+                    const ChangePasswordPage()),
+                _gridItem(context, Icons.history, 'Login Activity',
+                    const LoginActivityPage()),
+                _gridItem(context, Icons.message, 'Security Questions',
+                    const SecurityQuestionsPage()),
+                _gridItem(context, Icons.privacy_tip, 'Privacy Settings',
+                    const BroadcastSettingsPage()),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+            // Options Grid for Balance
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 4,
+              childAspectRatio: 1.5,
+              crossAxisSpacing: 3,
+              mainAxisSpacing: 3,
+              children: [
+                _gridItem(context, Icons.share, 'Share', const SharePage()),
+                _gridItem(
+                    context, Icons.groups, 'Affiliate', const AffiliatePage()),
+                _gridItem(context, Icons.notifications, 'Notifications',
+                    const NotificationPage()),
+                _gridItem(context, Icons.info, 'About', const AboutPage()),
+              ],
+            ),
+
+            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -225,13 +295,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _gridItem(
       BuildContext context, IconData icon, String title, Widget page) {
-    return Card(
-      color: secondaryColor,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => page));
-        },
+    return InkWell(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+      },
+      child: Container(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -239,11 +307,15 @@ class _ProfilePageState extends State<ProfilePage> {
               shaderCallback: (Rect bounds) {
                 return pinkGradient.createShader(bounds);
               },
-              child: Icon(icon, size: 30, color: Colors.white),
+              child: Icon(icon, size: 25, color: Colors.white),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 5),
             Text(title,
-                style: const TextStyle(color: Colors.white, fontSize: 12)),
+                textAlign: TextAlign.center, // Align text to the center
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                )),
           ],
         ),
       ),
@@ -255,7 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 5.0),
       child: Material(
-        elevation: 4.0,
+        elevation: 0, // Removed elevation to avoid shadow
         color: secondaryColor,
         borderRadius: BorderRadius.circular(5.0),
         child: InkWell(
@@ -269,8 +341,7 @@ class _ProfilePageState extends State<ProfilePage> {
               shaderCallback: (Rect bounds) {
                 return pinkGradient.createShader(bounds);
               },
-              child: Icon(icon,
-                  color: Colors.white), // Use white as the base color
+              child: Icon(icon, color: Colors.white),
             ),
             title: Text(title, style: const TextStyle(color: Colors.white)),
           ),
@@ -279,5 +350,3 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 }
-
-// Ensure all pages (like WithdrawPage, DepositPage, etc.) are correctly implemented.

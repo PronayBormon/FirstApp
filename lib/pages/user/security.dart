@@ -12,6 +12,12 @@ import 'package:homepage_project/pages/hoster-list.dart';
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
 const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
+const pinkGradient = LinearGradient(
+  colors: [
+    Color.fromRGBO(228, 62, 229, 1),
+    Color.fromRGBO(229, 15, 112, 1),
+  ],
+);
 
 class SecurityPage extends StatefulWidget {
   const SecurityPage({super.key});
@@ -35,8 +41,8 @@ class _SecurityPageState extends State<SecurityPage> {
             context, MaterialPageRoute(builder: (context) => const Homepage()));
         break;
       case 1:
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => WalletPage()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const WalletPage()));
         break;
       case 2:
         Navigator.push(context,
@@ -141,7 +147,11 @@ class _SecurityPageState extends State<SecurityPage> {
           padding: const EdgeInsets.all(15.0),
           child: Row(
             children: [
-              Icon(icon, color: mainColor),
+              // Using Shader to create a gradient effect for the icon
+              ShaderMask(
+                shaderCallback: (bounds) => pinkGradient.createShader(bounds),
+                child: Icon(icon, color: Colors.white), // Icon must be white
+              ),
               const SizedBox(width: 15),
               Expanded(
                 child: Text(

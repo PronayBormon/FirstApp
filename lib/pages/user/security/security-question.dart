@@ -110,16 +110,16 @@ class _SecurityQuestionsPageState extends State<SecurityQuestionsPage> {
             TextField(
               controller: controller,
               style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Your Answer',
-                labelStyle: const TextStyle(color: Colors.white),
-                border: const OutlineInputBorder(
+                labelStyle: TextStyle(color: Colors.white),
+                border: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
                 ),
-                enabledBorder: const OutlineInputBorder(
+                enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
                 ),
-                focusedBorder: const OutlineInputBorder(
+                focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
                 ),
                 filled: true,

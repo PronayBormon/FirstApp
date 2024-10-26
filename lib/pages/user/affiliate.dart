@@ -11,8 +11,8 @@ class AffiliatePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double myAffiliateAmount = 150.0; // Sample amount
-    final String affiliateLink = 'https://example.com/affiliate?ref=yourcode';
+    const double myAffiliateAmount = 150.0; // Sample amount
+    const String affiliateLink = 'https://example.com/affiliate?ref=yourcode';
 
     // Sample list of affiliate users
     final List<Map<String, dynamic>> affiliateUsers = [
@@ -81,8 +81,8 @@ class AffiliatePage extends StatelessWidget {
                         const Text('Your Affiliate Link:',
                             style: TextStyle(color: Colors.white)),
                         const SizedBox(height: 5),
-                        Text(affiliateLink,
-                            style: const TextStyle(color: Colors.grey)),
+                        const Text(affiliateLink,
+                            style: TextStyle(color: Colors.grey)),
                         const SizedBox(height: 10),
                         ElevatedButton(
                           onPressed: () {
@@ -130,7 +130,7 @@ class AffiliatePage extends StatelessWidget {
                               secondaryColor, // Background color for the item
                           borderRadius:
                               BorderRadius.circular(10), // Rounded corners
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
                               color: Colors.black26,
                               blurRadius: 4,

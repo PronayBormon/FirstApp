@@ -27,7 +27,8 @@ class _TransectionPageState extends State<Transection>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController =
+        TabController(length: 4, vsync: this); // Update length to 4
   }
 
   @override
@@ -54,7 +55,7 @@ class _TransectionPageState extends State<Transection>
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => WalletPage()),
+          MaterialPageRoute(builder: (context) => const WalletPage()),
         );
         break;
       case 2:
@@ -66,7 +67,7 @@ class _TransectionPageState extends State<Transection>
       case 3:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ProfilePage()),
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
         );
         break;
     }
@@ -76,7 +77,7 @@ class _TransectionPageState extends State<Transection>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transection History',
+        title: const Text('Transaction History',
             style: TextStyle(color: mainColor)),
         centerTitle: true,
         elevation: 2.0,
@@ -113,11 +114,13 @@ class _TransectionPageState extends State<Transection>
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.white, // Color of the selected tab text
-          unselectedLabelColor: Colors.grey, // Color of the unselected tab text
-          indicatorColor: mainColor, // Color of the indicator
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.grey,
+          indicatorColor: mainColor,
           tabs: const [
-            Tab(text: 'Transaction History'),
+            Tab(text: 'All'),
+            Tab(text: 'Deposit'),
+            Tab(text: 'Withdraw'),
             Tab(text: 'Bet History'),
           ],
         ),
@@ -163,7 +166,7 @@ class _TransectionPageState extends State<Transection>
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // Transaction History Tab
+                  // All Transactions Tab
                   ListView.builder(
                     itemCount: 10, // Example transaction count
                     itemBuilder: (context, index) {
@@ -171,10 +174,8 @@ class _TransectionPageState extends State<Transection>
                         onEnter: (_) => setState(() {}),
                         onExit: (_) => setState(() {}),
                         child: Container(
-                          color:
-                              primaryColor, // Background color for each list item
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 5.0), // Space between items
+                          color: primaryColor,
+                          margin: const EdgeInsets.symmetric(vertical: 5.0),
                           child: ListTile(
                             title: Text(
                               'Transaction #${index + 1}',
@@ -199,6 +200,74 @@ class _TransectionPageState extends State<Transection>
                       );
                     },
                   ),
+                  // Deposit Tab
+                  ListView.builder(
+                    itemCount: 5, // Example deposit count
+                    itemBuilder: (context, index) {
+                      return MouseRegion(
+                        onEnter: (_) => setState(() {}),
+                        onExit: (_) => setState(() {}),
+                        child: Container(
+                          color: primaryColor,
+                          margin: const EdgeInsets.symmetric(vertical: 5.0),
+                          child: ListTile(
+                            title: Text(
+                              'Deposit #${index + 1}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Details of deposit #${index + 1}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                              ),
+                            ),
+                            trailing: Text(
+                              '\$${(index + 1) * 100}', // Example amount
+                              style: const TextStyle(
+                                color: mainColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Withdraw Tab
+                  ListView.builder(
+                    itemCount: 5, // Example withdraw count
+                    itemBuilder: (context, index) {
+                      return MouseRegion(
+                        onEnter: (_) => setState(() {}),
+                        onExit: (_) => setState(() {}),
+                        child: Container(
+                          color: primaryColor,
+                          margin: const EdgeInsets.symmetric(vertical: 5.0),
+                          child: ListTile(
+                            title: Text(
+                              'Withdraw #${index + 1}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Details of withdraw #${index + 1}',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                              ),
+                            ),
+                            trailing: Text(
+                              '\$${(index + 1) * 80}', // Example amount
+                              style: const TextStyle(
+                                color: mainColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   // Bet History Tab
                   ListView.builder(
                     itemCount: 10, // Example bet history count
@@ -207,10 +276,8 @@ class _TransectionPageState extends State<Transection>
                         onEnter: (_) => setState(() {}),
                         onExit: (_) => setState(() {}),
                         child: Container(
-                          color:
-                              primaryColor, // Background color for each list item
-                          margin: const EdgeInsets.symmetric(
-                              vertical: 5.0), // Space between items
+                          color: primaryColor,
+                          margin: const EdgeInsets.symmetric(vertical: 5.0),
                           child: ListTile(
                             title: Text(
                               'Bet #${index + 1}',

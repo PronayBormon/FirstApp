@@ -10,6 +10,11 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_svg/flutter_svg.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
+const primaryColor = Color.fromRGBO(35, 38, 38, 1);
+const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
+const pinkGradient = LinearGradient(
+  colors: [Color.fromRGBO(228, 62, 229, 1), Color.fromRGBO(229, 15, 112, 1)],
+);
 
 class AllCats extends StatefulWidget {
   const AllCats({super.key});
@@ -56,14 +61,14 @@ class _AllCatsState extends State<AllCats> {
         // Stay on Homepage
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => WalletPage()),
+          MaterialPageRoute(builder: (context) => const WalletPage()),
         );
         break;
       case 2:
         Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => ProfilePage()), // Example for Profile
+              builder: (context) => const ProfilePage()), // Example for Profile
         );
         break;
       case 3:

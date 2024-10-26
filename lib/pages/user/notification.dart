@@ -54,7 +54,7 @@ class _NotificationPageState extends State<NotificationPage> {
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => WalletPage()),
+          MaterialPageRoute(builder: (context) => const WalletPage()),
         );
         break;
       case 2:
@@ -66,7 +66,7 @@ class _NotificationPageState extends State<NotificationPage> {
       case 3:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ProfilePage()),
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
         );
         break;
     }

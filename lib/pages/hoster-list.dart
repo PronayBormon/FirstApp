@@ -7,6 +7,11 @@ import 'package:homepage_project/pages/user/profile.dart';
 import 'package:homepage_project/helper/constant.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
+const primaryColor = Color.fromRGBO(35, 38, 38, 1);
+const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
+const pinkGradient = LinearGradient(
+  colors: [Color.fromRGBO(228, 62, 229, 1), Color.fromRGBO(229, 15, 112, 1)],
+);
 
 class HosterListPage extends StatefulWidget {
   const HosterListPage({super.key});
@@ -50,7 +55,7 @@ class _HosterListPageState extends State<HosterListPage> {
         // Navigate to Settings page
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ProfilePage()),
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
         );
         break;
     }

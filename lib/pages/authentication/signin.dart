@@ -209,7 +209,7 @@ class _SignInState extends State<SignIn> {
                     minimumSize:
                         const Size(double.infinity, 50), // Full width button
                   ),
-                  child: Text(
+                  child: const Text(
                     'Signin',
                     style: TextStyle(color: Colors.white),
                   ),

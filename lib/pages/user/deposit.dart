@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
-import 'package:homepage_project/pages/user/profile.dart';
-import 'package:homepage_project/pages/games.dart';
+import 'package:flutter_svg/svg.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
+const primaryColor = Color.fromRGBO(35, 38, 38, 1);
+const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
 
 class DepositPage extends StatefulWidget {
   const DepositPage({super.key});
@@ -14,195 +13,303 @@ class DepositPage extends StatefulWidget {
   _DepositPageState createState() => _DepositPageState();
 }
 
-class _DepositPageState extends State<DepositPage> {
-  int _selectedIndex = 1; // Default to Home
+class _DepositPageState extends State<DepositPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index; // Update the selected index
-    });
+  final _scaffoldKey = GlobalKey<ScaffoldState>(); // GlobalKey for Scaffold
+  final _cryptoFormKey = GlobalKey<FormState>();
+  final _fiatFormKey = GlobalKey<FormState>();
 
-    // Handle navigation logic
-    switch (index) {
-      case 0:
-        // Navigate to Wallet page
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const Homepage()),
-        );
-        break;
-      case 1:
-        // Stay on Homepage
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DepositPage()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) => ProfilePage()), // Example for Profile
-        );
-        break;
-      case 3:
-        // Navigate to Settings page
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const Homepage()),
-        );
-        break;
-      case 4:
-        break;
-    }
+  String? selectedCurrency;
+  String? selectedNetwork;
+  String? selectedMethod;
+  String? _email;
+  String? _bankName;
+  String? _branch;
+  String? _accountNumber;
+  String? _mobileNumber;
+  String? _amount;
+
+  final List<String> currencyOptions = ['Bitcoin', 'Ethereum', 'Litecoin'];
+  final List<String> networkOptions = ['ERC20', 'TRC20'];
+  final List<String> methodOptions = [
+    'Bank',
+    'PayPal',
+    'Stripe',
+    'Payoneer',
+    'Mobile Banking'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey, // Assign the GlobalKey here
       appBar: AppBar(
-        title: const Text('Wallet',
-            style: TextStyle(
-              color: mainColor,
-            )),
+        title: const Text('Deposit', style: TextStyle(color: mainColor)),
         centerTitle: true,
-        elevation: 2.0,
-        shadowColor: Colors.black,
-        backgroundColor: const Color.fromRGBO(41, 45, 46, 1),
+        backgroundColor: secondaryColor,
         leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context); // Enable back function
-          },
+          onTap: () => Navigator.pop(context),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset(
-              'assets/icons/chevron-left.svg',
-              color: Colors.white,
-              height: 25,
-              width: 25,
-            ),
+            child: SvgPicture.asset('assets/icons/chevron-left.svg',
+                color: Colors.white, height: 25, width: 25),
           ),
         ),
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
+          IconButton(
+            icon: SvgPicture.asset('assets/icons/menu.svg',
+                color: Colors.white, height: 25, width: 25),
+            onPressed: () {
+              _scaffoldKey.currentState
+                  ?.openDrawer(); // Use GlobalKey to open the drawer
+            },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Crypto'),
+            Tab(text: 'Fiat'),
+          ],
+          indicator: const UnderlineTabIndicator(
+            borderSide: BorderSide(color: Colors.white, width: 3.0),
+          ),
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white54,
+        ),
       ),
       drawer: const OffcanvasMenu(),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30.0),
-          topRight: Radius.circular(30.0),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.sports_esports),
-              label: 'Games',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle),
-              label: 'Model',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
-          onTap: _onItemTapped,
-        ),
-      ),
       backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
-      body: const Center(
-        child: Text(
-          "Wallet Page",
-          style: TextStyle(
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ContainerTitle extends StatelessWidget {
-  final String title;
-  final String viewAllLink;
-
-  const ContainerTitle({
-    super.key,
-    required this.title,
-    required this.viewAllLink,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 20.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: TabBarView(
+        controller: _tabController,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const GamesPage()),
-              );
-            },
-            child: Text(
-              viewAllLink,
-              style: const TextStyle(
-                color: mainColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
+          _buildCryptoDeposit(),
+          _buildFiatDeposit(),
         ],
       ),
     );
   }
-}
 
-Widget _allItems(String catName) {
-  return ElevatedButton(
-    style: ElevatedButton.styleFrom(
-      elevation: 2,
-      backgroundColor: Colors.teal,
-    ),
-    onPressed: () {
-      // Add your onPressed function here
-    },
-    child: Text(
-      catName,
-      style: const TextStyle(color: Colors.white),
-    ),
-  );
+  Widget _buildCryptoDeposit() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _cryptoFormKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDropdownField('Currency', selectedCurrency, currencyOptions,
+                (value) {
+              setState(() {
+                selectedCurrency = value;
+              });
+            }),
+            const SizedBox(height: 16),
+            TextFormField(
+              decoration: _inputDecoration('Wallet Address'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your wallet address';
+                }
+                return null;
+              },
+              onChanged: (value) {},
+            ),
+            const SizedBox(height: 16),
+            _buildDropdownField(
+                'Wallet Network', selectedNetwork, networkOptions, (value) {
+              setState(() {
+                selectedNetwork = value;
+              });
+            }),
+            const SizedBox(height: 16),
+            TextFormField(
+              decoration: _inputDecoration('Amount'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter the amount';
+                }
+                return null;
+              },
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                _amount = value;
+              },
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                if (_cryptoFormKey.currentState!.validate()) {
+                  // Handle crypto deposit action
+                  print('Submitting Crypto Deposit:');
+                  print('Currency: $selectedCurrency');
+                  print('Wallet Address: $_amount'); // Adjust this as needed
+                  print('Network: $selectedNetwork');
+                  print('Amount: $_amount');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: mainColor, // Set the button color
+                minimumSize: const Size(double.infinity, 50), // Full width
+              ),
+              child: const Text(
+                'Deposit',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFiatDeposit() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _fiatFormKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              decoration: _inputDecoration('Amount'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter the amount';
+                }
+                return null;
+              },
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                _amount = value;
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildDropdownField('Method', selectedMethod, methodOptions,
+                (value) {
+              setState(() {
+                selectedMethod = value;
+              });
+            }),
+            if (selectedMethod == 'Bank') ...[
+              const SizedBox(height: 16),
+              _buildTextField('Bank Name', (value) {
+                _bankName = value;
+              }),
+              const SizedBox(height: 16),
+              _buildTextField('Branch', (value) {
+                _branch = value;
+              }),
+              const SizedBox(height: 16),
+              _buildTextField('Account Number', (value) {
+                _accountNumber = value;
+              }),
+            ] else if (selectedMethod != 'Mobile Banking') ...[
+              const SizedBox(height: 16),
+              _buildTextField('Email', (value) {
+                _email = value;
+              }, isEmail: true),
+            ] else ...[
+              const SizedBox(height: 16),
+              _buildTextField('Mobile Number', (value) {
+                _mobileNumber = value;
+              }),
+            ],
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                if (_fiatFormKey.currentState!.validate()) {
+                  // Handle fiat deposit action
+                  print('Submitting Fiat Deposit:');
+                  print('Method: $selectedMethod');
+                  print('Amount: $_amount');
+                  print('Email: $_email');
+                  print('Bank Name: $_bankName');
+                  print('Branch: $_branch');
+                  print('Account Number: $_accountNumber');
+                  print('Mobile Number: $_mobileNumber');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: mainColor, // Set the button color
+                minimumSize: const Size(double.infinity, 50), // Full width
+              ),
+              child: const Text(
+                'Deposit',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownField(String label, String? selectedValue,
+      List<String> options, ValueChanged<String?> onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: DropdownButtonFormField<String>(
+        value: selectedValue,
+        onChanged: onChanged,
+        items: options.map((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value, style: const TextStyle(color: Colors.white)),
+          );
+        }).toList(),
+        decoration: _inputDecoration(label),
+        dropdownColor: secondaryColor,
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label, ValueChanged<String?> onChanged,
+      {bool isEmail = false}) {
+    return TextFormField(
+      decoration: _inputDecoration(label),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Please enter $label';
+        }
+        if (isEmail && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+          return 'Please enter a valid email';
+        }
+        return null;
+      },
+      onChanged: onChanged,
+    );
+  }
+
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(color: Colors.white),
+      filled: true,
+      fillColor: secondaryColor,
+      border: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.white),
+      ),
+      enabledBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.white),
+      ),
+      focusedBorder: const OutlineInputBorder(
+        borderSide: BorderSide(color: Colors.white),
+      ),
+    );
+  }
 }

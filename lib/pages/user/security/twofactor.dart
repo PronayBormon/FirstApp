@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:homepage_project/pages/HomePage.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -80,34 +81,45 @@ class _TwoFactorAuthenticationPageState
                       Text(method, style: const TextStyle(color: Colors.white)),
                 );
               }).toList(),
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Select 2FA Method',
-                labelStyle: const TextStyle(color: Colors.white),
+                labelStyle: TextStyle(color: Colors.white),
                 filled: true,
                 fillColor: secondaryColor,
-                border: const OutlineInputBorder(
+                border: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
                 ),
-                enabledBorder: const OutlineInputBorder(
+                enabledBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
                 ),
-                focusedBorder: const OutlineInputBorder(
+                focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
                 ),
               ),
               dropdownColor: secondaryColor,
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _is2FAEnabled ? _saveSettings : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: mainColor,
+            Container(
+              decoration: BoxDecoration(
+                gradient: pinkGradient,
+                borderRadius:
+                    BorderRadius.circular(50), // Optional: for rounded corners
               ),
-              child: Text(
-                'Save Changes',
-                style: const TextStyle(color: Colors.white),
+              child: ElevatedButton(
+                onPressed: _is2FAEnabled ? _saveSettings : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.transparent, // Set background to transparent
+                  elevation: 0, // Remove elevation to avoid shadow
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 15, horizontal: 30), // Adjust padding as needed
+                ),
+                child: const Text(
+                  'Save Changes',
+                  style: TextStyle(color: Colors.white),
+                ),
               ),
-            ),
+            )
           ],
         ),
       ),

@@ -30,55 +30,55 @@ class AboutPage extends StatelessWidget {
         ),
       ),
       backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'About This Software',
               style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'This software is designed to provide users with an intuitive and engaging experience. Our main features include:',
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
-            const SizedBox(height: 8),
-            const BulletPoint(text: 'User-friendly interface'),
-            const BulletPoint(text: 'Real-time notifications'),
-            const BulletPoint(text: 'Secure data handling'),
-            const BulletPoint(text: 'Comprehensive support'),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 8),
+            BulletPoint(text: 'User-friendly interface'),
+            BulletPoint(text: 'Real-time notifications'),
+            BulletPoint(text: 'Secure data handling'),
+            BulletPoint(text: 'Comprehensive support'),
+            SizedBox(height: 16),
+            Text(
               'Our Mission:',
               style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'To empower users with innovative tools that enhance productivity and promote engagement.',
               style: TextStyle(color: Colors.white, fontSize: 16),
             ),
-            const SizedBox(height: 16),
-            const Text(
+            SizedBox(height: 16),
+            Text(
               'Contact Us:',
               style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
-            const Text(
+            SizedBox(height: 8),
+            Text(
               'Email: support@example.com',
               style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
-            const Text(
+            Text(
               'Website: www.example.com',
               style: TextStyle(color: Colors.grey, fontSize: 16),
             ),

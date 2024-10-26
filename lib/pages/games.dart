@@ -1,107 +1,159 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:carousel_slider/carousel_slider.dart';
+import 'package:homepage_project/helper/constant.dart';
 import 'package:homepage_project/pages/HomePage.dart';
+import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/user/profile.dart';
-import 'package:homepage_project/pages/user/wallet.dart';
-import './components/Sidebar.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_svg/flutter_svg.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
+const primaryColor = Color.fromRGBO(35, 38, 38, 1);
+const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
 
-final List<String> imgList = [
-  'https://images.unsplash.com/photo-1520342868574-5fa3804e551c?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=6ff92caffcdd63681a35134a6770ed3b&auto=format&fit=crop&w=1951&q=80',
-  'https://images.unsplash.com/photo-1522205408450-add114ad53fe?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=368f45b0888aeb0b7b08e3a1084d3ede&auto=format&fit=crop&w=1950&q=80',
-  'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=94a1e718d89ca60a6337a6008341ca50&auto=format&fit=crop&w=1950&q=80',
-  'https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=89719a0d55dd05e2deae4120227e6efc&auto=format&fit=crop&w=1953&q=80',
-  'https://images.unsplash.com/photo-1508704019882-f9cf40e475b4?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=8c6e5e3aba713b17aa1fe71ab4f0ae5b&auto=format&fit=crop&w=1352&q=80',
-  'https://images.unsplash.com/photo-1519985176271-adb1088fa94c?ixlib=rb-0.3.5&ixid=eyJhcHBfaWQiOjEyMDd9&s=a0c8d632e977f94e5d312d9893258f59&auto=format&fit=crop&w=1355&q=80'
-];
+class Game {
+  final int id;
+  final String code;
+  final String name;
+  final String imagePath;
 
-class GamesPage extends StatefulWidget {
-  const GamesPage({super.key});
+  Game(
+      {required this.id,
+      required this.name,
+      required this.imagePath,
+      required this.code});
 
-  @override
-  _GamePageState createState() => _GamePageState();
+  factory Game.fromJson(Map<String, dynamic> json) {
+    return Game(
+      id: json['id'],
+      name: json['name'],
+      imagePath: json['imagepath'],
+      code: json['code'], // Ensure this matches your API response
+    );
+  }
 }
 
-class _GamePageState extends State<GamesPage> {
-  int _selectedIndex = 1; // Default to Home
+class GameCategory {
+  final int id;
+  final String name;
+  List<Game>? games;
+
+  GameCategory({required this.id, required this.name, this.games});
+
+  factory GameCategory.fromJson(Map<String, dynamic> json) {
+    return GameCategory(
+      id: json['id'],
+      name: json['name'],
+      games: [],
+    );
+  }
+}
+
+class GamesPage extends StatefulWidget {
+  const GamesPage({Key? key}) : super(key: key);
+
+  @override
+  _GamesPageState createState() => _GamesPageState();
+}
+
+class _GamesPageState extends State<GamesPage> {
+  late Future<List<GameCategory>> _futureCategories;
+  final int _selectedIndex = 1;
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    List<Widget> pages = [
+      const Homepage(),
+      const GamesPage(),
+      const HosterListPage(),
+      const ProfilePage(),
+    ];
 
-    // Handle navigation logic
-    switch (index) {
-      case 0:
-        // Navigate to Wallet page
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const Homepage()),
-        );
-        break;
-      case 1:
-        // Stay on Homepage
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const GamesPage()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-              builder: (context) =>
-                  const HosterListPage()), // Example for Profile
-        );
-        break;
-      case 3:
-        // Navigate to Settings page
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ProfilePage()),
-        );
-        break;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => pages[index]),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _futureCategories = fetchGameCategories();
+  }
+
+  Future<List<GameCategory>> fetchGameCategories() async {
+    final response = await http
+        .get(Uri.parse('http://api.totomonkey.com/api/public/allGamesType'));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = json.decode(response.body);
+      List<GameCategory> categories = [];
+
+      for (var json in jsonData) {
+        GameCategory category = GameCategory.fromJson(json);
+        category.games = await fetchGamesByCategory(category.name);
+        categories.add(category);
+      }
+
+      return categories;
+    } else {
+      throw Exception('Failed to load game categories');
     }
+  }
+
+  Future<List<Game>> fetchGamesByCategory(String slug) async {
+    try {
+      final response = await http.get(Uri.parse(
+          'http://api.totomonkey.com/api/public/gameTypeWiseCategory/$slug'));
+
+      if (response.statusCode == 200) {
+        final jsonResponse = json.decode(response.body);
+        print(jsonResponse);
+        if (jsonResponse['success']) {
+          var data = jsonResponse['data'];
+          if (data is List) {
+            return data.map((json) => Game.fromJson(json)).toList();
+          } else {
+            throw Exception(
+                'Expected data to be a list but got ${data.runtimeType}');
+          }
+        } else {
+          throw Exception('Failed to fetch games: ${jsonResponse['message']}');
+        }
+      } else {
+        throw Exception('Failed to load games: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching games: $e');
+      throw Exception('Error fetching games: $e');
+    }
+  }
+
+  void _onGameTapped(Game game) {
+    print('Tapped on game: ${game.code}');
+    // Navigator.push(context, MaterialPageRoute(builder: (context) => GameDetailPage(game: game)));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Games',
-            style: TextStyle(
-              color: mainColor,
-            )),
+        title: const Text('Games', style: TextStyle(color: mainColor)),
         centerTitle: true,
-        elevation: 2.0,
-        shadowColor: Colors.black,
-        backgroundColor: const Color.fromRGBO(41, 45, 46, 1),
+        backgroundColor: secondaryColor,
         leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context); // Uncomment to enable back function
-          },
+          onTap: () => Navigator.pop(context),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset(
-              'assets/icons/chevron-left.svg',
-              color: Colors.white,
-              height: 25,
-              width: 25,
-            ),
+            child: SvgPicture.asset('assets/icons/chevron-left.svg',
+                color: Colors.white, height: 25, width: 25),
           ),
         ),
         actions: [
           Builder(
             builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
+              icon: SvgPicture.asset('assets/icons/menu.svg',
+                  color: Colors.white, height: 25, width: 25),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
@@ -109,237 +161,105 @@ class _GamePageState extends State<GamesPage> {
           ),
         ],
       ),
-      // Drawer here
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30.0),
-          topRight: Radius.circular(30.0),
-        ),
+            topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0)),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           selectedItemColor: mainColor,
           unselectedItemColor: Colors.black54,
           items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
+                icon: Icon(Icons.sports_esports), label: 'Games'),
             BottomNavigationBarItem(
-              icon: Icon(Icons.sports_esports),
-              label: 'Games',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle),
-              label: 'Model',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
+                icon: Icon(Icons.play_circle), label: 'Betting'),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
           onTap: _onItemTapped,
         ),
       ),
+      backgroundColor: primaryColor,
+      body: FutureBuilder<List<GameCategory>>(
+        future: _futureCategories,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-      backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            //like a banner or card
-            Container(
-              // height: 300,
-              margin: const EdgeInsets.only(
-                top: 30,
-                left: 20,
-                right: 20,
-              ),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                color: Colors.black12,
-              ),
-              child: Center(
-                  child: CarouselSlider(
-                options: CarouselOptions(),
-                items: imgList
-                    .map((item) => Container(
-                          decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              color: const Color.fromRGBO(41, 45, 46, 1)),
-                          margin: const EdgeInsets.only(left: 10, right: 10),
-                          child: Image.network(item, fit: BoxFit.cover),
-                        ))
-                    .toList(),
-              )),
-            ),
-            const ContainerTitle(title: 'Games'),
+          final categories = snapshot.data!;
 
-            Container(
-              // color: Colors.white, // Set the background color of the container
-              margin: const EdgeInsets.only(top: 10, bottom: 10),
-              padding: const EdgeInsets.only(
-                top: 5.0,
-                bottom: 5.0,
-                left: 20.0,
-                right: 20.0,
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal, // Allow horizontal scrolling
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: <Widget>[
-                    _allItems('all'),
-                    const SizedBox(width: 5),
-                    // You can add more items here if needed
-                    _allItems('Casino'),
-                    const SizedBox(width: 5),
-                    // You can add more items here if needed
-                    _allItems('Hoster'),
-                    const SizedBox(width: 5),
-                    // You can add more items here if needed
-                    _allItems('Live'),
-                    const SizedBox(width: 5),
-                    // You can add more items here if needed
-                    _allItems('Auto Roletee'),
-                    const SizedBox(width: 5),
-                    // You can add more items here if needed
-                    _allItems('Teenpatti'),
-                    const SizedBox(width: 5),
-                    // You can add more items here if needed
-                    _allItems('Soccer'),
-                    const SizedBox(width: 5),
-                    // You can add more items here if needed
-                    _allItems('Live'),
-                    const SizedBox(width: 5),
-                    // You can add more items here if needed
-                  ],
-                ),
-              ),
-            ),
-
-            // GridView of Posts
-            Container(
-              // padding: EdgeInsets.all(5.0), // Padding inside the container
-              margin: const EdgeInsets.only(
-                top: 5,
-                left: 20,
-                right: 20,
-                bottom: 20,
-              ),
-              decoration: BoxDecoration(
-                // color: Colors.white, // Container background color
-                borderRadius: BorderRadius.circular(20), // Rounded corners
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 2,
-                    blurRadius: 10,
-                    offset: const Offset(0, 3), // Shadow position
-                  ),
-                ],
-              ),
-
-              child: GridView.builder(
-                shrinkWrap: true, // Ensures GridView takes only necessary space
-                physics:
-                    const NeverScrollableScrollPhysics(), // Disables scrolling inside GridView
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3, // Number of columns
-                  crossAxisSpacing: 5, // Spacing between columns
-                  mainAxisSpacing: 5, // Spacing between rows
-                  childAspectRatio: 0.8, // Adjust item height/width ratio
-                ),
-                itemCount: 102, // Number of grid items (posts)
-                itemBuilder: (context, index) {
-                  return GestureDetector(
-                    onTap: () {
-                      // Define action on post tap (e.g., navigate to a detailed view)
-                      print("Post $index tapped!");
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color:
-                            Colors.blueAccent[100], // Color for each post card
-                        borderRadius: BorderRadius.circular(10),
-                        image: const DecorationImage(
-                          image: NetworkImage(
-                              'https://via.placeholder.com/150'), // Placeholder image
-                          fit: BoxFit
-                              .cover, // Cover the whole container with the image
-                        ),
-                      ),
-                      child: Align(
-                        alignment: Alignment.bottomLeft,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            'Post #$index', // Placeholder text for each post
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ),
+          return ListView.builder(
+            itemCount: categories.length,
+            itemBuilder: (context, categoryIndex) {
+              final category = categories[categoryIndex];
+              return Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        category.name,
+                        style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
                       ),
                     ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-Widget _allItems(String catName) {
-  return ElevatedButton(
-    style: ElevatedButton.styleFrom(
-      elevation: 2,
-      backgroundColor: Colors.teal, // Use 'backgroundColor' for Flutter 2.5+
-    ),
-    onPressed: () {
-      // Add your onPressed function here
-    },
-    child: Text(
-      catName,
-      style: const TextStyle(color: Colors.white),
-    ),
-  );
-}
-
-class ContainerTitle extends StatelessWidget {
-  final String title;
-
-  const ContainerTitle({
-    super.key,
-    required this.title,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 10),
-      padding: const EdgeInsets.only(
-        top: 8.0,
-        left: 20.0,
-        right: 20.0,
-        bottom: 1.0,
-      ),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: mainColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
+                    GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        childAspectRatio: .56,
+                        crossAxisSpacing: 5,
+                        mainAxisSpacing: 0,
+                      ),
+                      itemCount: category.games!.length,
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemBuilder: (context, gameIndex) {
+                        final game = category.games![gameIndex];
+                        return GestureDetector(
+                          onTap: () => _onGameTapped(game),
+                          child: Card(
+                            color: primaryColor,
+                            elevation: 0,
+                            child: Column(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                  child: Image.network(
+                                    game.imagePath,
+                                    fit: BoxFit.cover,
+                                    height: 150,
+                                    width: double.infinity,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    game.name,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }

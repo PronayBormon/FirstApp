@@ -85,7 +85,7 @@ class OffcanvasMenu extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (context) =>
-                        ProfilePage()), // Example navigation to a "MenuPage"
+                        const ProfilePage()), // Example navigation to a "MenuPage"
               );
             },
           ),

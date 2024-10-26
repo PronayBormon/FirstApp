@@ -326,7 +326,7 @@ class _SignUpState extends State<SignUp> {
                     minimumSize:
                         const Size(double.infinity, 50), // Full width button
                   ),
-                  child: Text(
+                  child: const Text(
                     'SignUp',
                     style: TextStyle(color: Colors.white),
                   ),

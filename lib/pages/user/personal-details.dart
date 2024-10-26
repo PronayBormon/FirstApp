@@ -8,6 +8,9 @@ import 'package:homepage_project/pages/user/wallet.dart';
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
 const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
+const pinkGradient = LinearGradient(
+  colors: [Color.fromRGBO(228, 62, 229, 1), Color.fromRGBO(229, 15, 112, 1)],
+);
 
 class PersonalDetails extends StatefulWidget {
   const PersonalDetails({super.key});
@@ -41,8 +44,8 @@ class _PersonalDetailsState extends State<PersonalDetails> {
             context, MaterialPageRoute(builder: (context) => const Homepage()));
         break;
       case 1:
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => WalletPage()));
+        Navigator.push(context,
+            MaterialPageRoute(builder: (context) => const WalletPage()));
         break;
       case 2:
         Navigator.push(context,
@@ -290,7 +293,7 @@ class _EditDetailsState extends State<EditDetails> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: mainColor, // Set the button color
               ),
-              child: Text(
+              child: const Text(
                 'Save Changes',
                 style: TextStyle(
                   color: Colors.white,
@@ -362,4 +365,29 @@ class _EditDetailsState extends State<EditDetails> {
       ),
     );
   }
+}
+
+Widget _actionButton(BuildContext context, String title, Widget page) {
+  return Expanded(
+    child: Container(
+      decoration: BoxDecoration(
+        gradient: pinkGradient,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+        ),
+        onPressed: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => page));
+        },
+        child: Text(title, style: const TextStyle(color: Colors.white)),
+      ),
+    ),
+  );
 }
