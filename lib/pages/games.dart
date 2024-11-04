@@ -51,7 +51,7 @@ class GameCategory {
 }
 
 class GamesPage extends StatefulWidget {
-  const GamesPage({Key? key}) : super(key: key);
+  const GamesPage({super.key});
 
   @override
   _GamesPageState createState() => _GamesPageState();
@@ -84,7 +84,6 @@ class _GamesPageState extends State<GamesPage> {
   Future<List<GameCategory>> fetchGameCategories() async {
     final response = await http
         .get(Uri.parse('http://api.totomonkey.com/api/public/allGamesType'));
-
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);
       List<GameCategory> categories = [];
@@ -105,10 +104,9 @@ class _GamesPageState extends State<GamesPage> {
     try {
       final response = await http.get(Uri.parse(
           'http://api.totomonkey.com/api/public/gameTypeWiseCategory/$slug'));
-
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(response.body);
-        print(jsonResponse);
+        // print(jsonResponse);
         if (jsonResponse['success']) {
           var data = jsonResponse['data'];
           if (data is List) {
@@ -215,7 +213,7 @@ class _GamesPageState extends State<GamesPage> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
-                        childAspectRatio: .56,
+                        childAspectRatio: .65,
                         crossAxisSpacing: 5,
                         mainAxisSpacing: 0,
                       ),
@@ -236,7 +234,7 @@ class _GamesPageState extends State<GamesPage> {
                                   child: Image.network(
                                     game.imagePath,
                                     fit: BoxFit.cover,
-                                    height: 150,
+                                    height: 130,
                                     width: double.infinity,
                                   ),
                                 ),
@@ -245,7 +243,10 @@ class _GamesPageState extends State<GamesPage> {
                                   child: Text(
                                     game.name,
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(color: Colors.white),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                    ),
                                   ),
                                 ),
                               ],

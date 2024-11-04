@@ -5,7 +5,7 @@ import 'dart:convert';
 class GamesDetailPage extends StatelessWidget {
   final String slug;
 
-  const GamesDetailPage({Key? key, required this.slug}) : super(key: key);
+  const GamesDetailPage({super.key, required this.slug});
 
   Future<List<dynamic>> fetchGamesByCategory() async {
     print('Fetching games for category slug: $slug');
@@ -58,7 +58,7 @@ class GamesDetailPage extends StatelessWidget {
         title: Center(
           child: Text(
             '$slug Games',
-            style: TextStyle(color: Colors.white),
+            style: const TextStyle(color: Colors.white),
           ),
         ),
         backgroundColor: const Color.fromRGBO(41, 45, 46, 1),
