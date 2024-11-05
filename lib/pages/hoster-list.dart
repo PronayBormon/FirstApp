@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/games.dart';
+import 'package:homepage_project/pages/hoster-profile.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -15,13 +16,13 @@ class Hoster {
   final int videoId;
   final String title;
   final String thumbSrc;
-  final String url;
+  final String api_id;
 
   Hoster({
     required this.videoId,
     required this.title,
     required this.thumbSrc,
-    required this.url,
+    required this.api_id,
   });
 
   factory Hoster.fromJson(Map<String, dynamic> json) {
@@ -29,7 +30,7 @@ class Hoster {
       videoId: json['video_id'],
       title: json['title'],
       thumbSrc: json['thumb_src'] ?? '', // Ensure this is never null
-      url: json['embed'],
+      api_id: json['api_id'],
     );
   }
 }
@@ -70,16 +71,13 @@ class _HosterListPageState extends State<HosterListPage> {
 
   Future<void> _fetchHosters(int page) async {
     if (_isLoading || page > _totalPages) return;
-
     setState(() {
       _isLoading = true; // Start loading
     });
-
     final response = await http.get(
       Uri.parse(
-          'https://api.totomonkey.com/api/public/getAllHosters?page=$page'),
+          'https://api.totomonkey.com/api/public/getMobileAllHosters?page=$page'),
     );
-
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
       setState(() {
@@ -171,7 +169,9 @@ class _HosterListPageState extends State<HosterListPage> {
 
               return GestureDetector(
                 onTap: () {
-                  print('Navigating to: ${hoster.url}');
+                  // print('Navigating to: ${hoster.api_id}');
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => HosterProfile()));
                 },
                 child: Container(
                   decoration: BoxDecoration(
