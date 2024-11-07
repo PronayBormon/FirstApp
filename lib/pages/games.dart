@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:homepage_project/helper/constant.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
+import 'package:homepage_project/pages/game_list.dart';
+// import 'package:homepage_project/pages/game-details.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:http/http.dart' as http;
@@ -128,8 +130,16 @@ class _GamesPageState extends State<GamesPage> {
   }
 
   void _onGameTapped(Game game) {
-    print('Tapped on game: ${game.code}');
-    // Navigator.push(context, MaterialPageRoute(builder: (context) => GameDetailPage(game: game)));
+    // print('Tapped on game: ${game.code}');
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            GameListPage(gameCode: game.code), // Passing the gameCode
+      ),
+    );
+    // Navigator.push(context,
+    //     MaterialPageRoute(builder: (context) => GameListPage(game.code)));
   }
 
   @override
@@ -213,7 +223,7 @@ class _GamesPageState extends State<GamesPage> {
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 3,
-                        childAspectRatio: .65,
+                        childAspectRatio: .90,
                         crossAxisSpacing: 5,
                         mainAxisSpacing: 0,
                       ),
@@ -234,7 +244,7 @@ class _GamesPageState extends State<GamesPage> {
                                   child: Image.network(
                                     game.imagePath,
                                     fit: BoxFit.cover,
-                                    height: 130,
+                                    height: 90,
                                     width: double.infinity,
                                   ),
                                 ),
@@ -245,8 +255,10 @@ class _GamesPageState extends State<GamesPage> {
                                     textAlign: TextAlign.center,
                                     style: const TextStyle(
                                       color: Colors.white,
-                                      fontSize: 10,
+                                      fontSize: 12,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],

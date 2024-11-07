@@ -36,14 +36,14 @@ class Hoster {
 }
 
 class HosterListPage extends StatefulWidget {
-  const HosterListPage({Key? key}) : super(key: key);
+  const HosterListPage({super.key});
 
   @override
   _HosterListPageState createState() => _HosterListPageState();
 }
 
 class _HosterListPageState extends State<HosterListPage> {
-  List<Hoster> _hosters = [];
+  final List<Hoster> _hosters = [];
   int _currentPage = 1;
   int _totalPages = 1; // Total pages from API
   bool _isLoading = false; // Loading state
@@ -171,7 +171,7 @@ class _HosterListPageState extends State<HosterListPage> {
                 onTap: () {
                   // print('Navigating to: ${hoster.api_id}');
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => HosterProfile()));
+                      MaterialPageRoute(builder: (context) => Homepage()));
                 },
                 child: Container(
                   decoration: BoxDecoration(
