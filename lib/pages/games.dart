@@ -3,7 +3,6 @@ import 'package:homepage_project/helper/constant.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/game_list.dart';
-// import 'package:homepage_project/pages/game-details.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:http/http.dart' as http;
@@ -16,38 +15,23 @@ const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
 
 class Game {
   final int id;
-  final String code;
   final String name;
   final String imagePath;
+  final String slug;
 
-  Game(
-      {required this.id,
-      required this.name,
-      required this.imagePath,
-      required this.code});
+  Game({
+    required this.id,
+    required this.name,
+    required this.imagePath,
+    required this.slug,
+  });
 
   factory Game.fromJson(Map<String, dynamic> json) {
     return Game(
       id: json['id'],
       name: json['name'],
       imagePath: json['imagepath'],
-      code: json['code'], // Ensure this matches your API response
-    );
-  }
-}
-
-class GameCategory {
-  final int id;
-  final String name;
-  List<Game>? games;
-
-  GameCategory({required this.id, required this.name, this.games});
-
-  factory GameCategory.fromJson(Map<String, dynamic> json) {
-    return GameCategory(
-      id: json['id'],
-      name: json['name'],
-      games: [],
+      slug: json['slug'],
     );
   }
 }
@@ -60,8 +44,9 @@ class GamesPage extends StatefulWidget {
 }
 
 class _GamesPageState extends State<GamesPage> {
-  late Future<List<GameCategory>> _futureCategories;
+  late Future<List<Game>> _futureGames;
   final int _selectedIndex = 1;
+  String _selectedFilter = "All";
 
   void _onItemTapped(int index) {
     List<Widget> pages = [
@@ -80,66 +65,61 @@ class _GamesPageState extends State<GamesPage> {
   @override
   void initState() {
     super.initState();
-    _futureCategories = fetchGameCategories();
+    _futureGames = fetchAllGames();
   }
 
-  Future<List<GameCategory>> fetchGameCategories() async {
-    final response = await http
-        .get(Uri.parse('http://api.totomonkey.com/api/public/allGamesType'));
+  Future<List<Game>> fetchAllGames() async {
+    final response = await http.get(
+      Uri.parse('https://api.totomonkey.com/api/public/getPublicAllGames'),
+    );
     if (response.statusCode == 200) {
-      final List<dynamic> jsonData = json.decode(response.body);
-      List<GameCategory> categories = [];
-
-      for (var json in jsonData) {
-        GameCategory category = GameCategory.fromJson(json);
-        category.games = await fetchGamesByCategory(category.name);
-        categories.add(category);
+      final jsonResponse = json.decode(response.body);
+      if (jsonResponse['success']) {
+        var data = jsonResponse['data'];
+        if (data is List) {
+          return data.map((json) => Game.fromJson(json)).toList();
+        } else {
+          throw Exception(
+              'Expected data to be a list but got ${data.runtimeType}');
+        }
+      } else {
+        throw Exception('Failed to fetch games: ${jsonResponse['message']}');
       }
-
-      return categories;
     } else {
-      throw Exception('Failed to load game categories');
+      throw Exception('Failed to load games: ${response.statusCode}');
     }
   }
 
-  Future<List<Game>> fetchGamesByCategory(String slug) async {
-    try {
-      final response = await http.get(Uri.parse(
-          'http://api.totomonkey.com/api/public/gameTypeWiseCategory/$slug'));
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
-        // print(jsonResponse);
-        if (jsonResponse['success']) {
-          var data = jsonResponse['data'];
-          if (data is List) {
-            return data.map((json) => Game.fromJson(json)).toList();
-          } else {
-            throw Exception(
-                'Expected data to be a list but got ${data.runtimeType}');
-          }
+  Future<List<Game>> fetchFilteredGames(String filter) async {
+    final response = await http.get(
+      Uri.parse(
+          'https://api.totomonkey.com/api/public/gameTypeWiseCategory/$filter'),
+    );
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      if (jsonResponse['success']) {
+        var data = jsonResponse['data'];
+        if (data is List) {
+          return data.map((json) => Game.fromJson(json)).toList();
         } else {
-          throw Exception('Failed to fetch games: ${jsonResponse['message']}');
+          throw Exception(
+              'Expected data to be a list but got ${data.runtimeType}');
         }
       } else {
-        throw Exception('Failed to load games: ${response.statusCode}');
+        throw Exception('Failed to fetch games: ${jsonResponse['message']}');
       }
-    } catch (e) {
-      print('Error fetching games: $e');
-      throw Exception('Error fetching games: $e');
+    } else {
+      throw Exception('Failed to load games: ${response.statusCode}');
     }
   }
 
   void _onGameTapped(Game game) {
-    // print('Tapped on game: ${game.code}');
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            GameListPage(gameCode: game.code), // Passing the gameCode
+        builder: (context) => GameListPage(gameCode: game.slug),
       ),
     );
-    // Navigator.push(context,
-    //     MaterialPageRoute(builder: (context) => GameListPage(game.code)));
   }
 
   @override
@@ -170,13 +150,20 @@ class _GamesPageState extends State<GamesPage> {
         ],
       ),
       drawer: const OffcanvasMenu(),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0)),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Colors.red, // <-- Set your desired background color here
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30.0),
+            topRight: Radius.circular(30.0),
+          ),
+        ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
+          selectedItemColor: mainColor, // Color for selected items
+          unselectedItemColor: Colors.black54, // Color for unselected items
+          backgroundColor: Colors
+              .transparent, // Set to transparent to allow container's color to show
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
@@ -189,90 +176,177 @@ class _GamesPageState extends State<GamesPage> {
         ),
       ),
       backgroundColor: primaryColor,
-      body: FutureBuilder<List<GameCategory>>(
-        future: _futureCategories,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = "All";
+                        _futureGames = fetchAllGames();
+                      });
+                    },
+                    child: const Text("All"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = "pg";
+                        _futureGames = fetchFilteredGames("pg");
+                      });
+                    },
+                    child: const Text("PG"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = "jili";
+                        _futureGames = fetchFilteredGames("jili");
+                      });
+                    },
+                    child: const Text("JILI"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = "pp_max";
+                        _futureGames = fetchFilteredGames("pp_max");
+                      });
+                    },
+                    child: const Text("PP Max"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = "omg_min";
+                        _futureGames = fetchFilteredGames("omg_min");
+                      });
+                    },
+                    child: const Text("OMG Man"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = "mini_game";
+                        _futureGames = fetchFilteredGames("mini_game");
+                      });
+                    },
+                    child: const Text("MINI GAME"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = "omg_crypto";
+                        _futureGames = fetchFilteredGames("omg_crypto");
+                      });
+                    },
+                    child: const Text("OMG Crypto"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = "hacksaw";
+                        _futureGames = fetchFilteredGames("hacksaw");
+                      });
+                    },
+                    child: const Text("Hacksaw"),
+                  ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = "pp";
+                        _futureGames = fetchFilteredGames("pp");
+                      });
+                    },
+                    child: const Text("PP"),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-          final categories = snapshot.data!;
+          // Simple loading indicator while data is loading
+          Expanded(
+            child: FutureBuilder<List<Game>>(
+              future: _futureGames,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                      child:
+                          CircularProgressIndicator()); // Show loading indicator
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-          return ListView.builder(
-            itemCount: categories.length,
-            itemBuilder: (context, categoryIndex) {
-              final category = categories[categoryIndex];
-              return Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Text(
-                        category.name,
-                        style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      ),
+                final games = snapshot.data!;
+
+                return Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: .90,
+                      crossAxisSpacing: 5,
+                      mainAxisSpacing: 0,
                     ),
-                    GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        childAspectRatio: .90,
-                        crossAxisSpacing: 5,
-                        mainAxisSpacing: 0,
-                      ),
-                      itemCount: category.games!.length,
-                      physics: const NeverScrollableScrollPhysics(),
-                      shrinkWrap: true,
-                      itemBuilder: (context, gameIndex) {
-                        final game = category.games![gameIndex];
-                        return GestureDetector(
-                          onTap: () => _onGameTapped(game),
-                          child: Card(
-                            color: primaryColor,
-                            elevation: 0,
-                            child: Column(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  child: Image.network(
-                                    game.imagePath,
-                                    fit: BoxFit.cover,
-                                    height: 90,
-                                    width: double.infinity,
-                                  ),
+                    itemCount: games.length,
+                    itemBuilder: (context, index) {
+                      final game = games[index];
+                      return GestureDetector(
+                        onTap: () => _onGameTapped(game),
+                        child: Card(
+                          color: primaryColor,
+                          elevation: 0,
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12.0),
+                                child: Image.network(
+                                  game.imagePath,
+                                  fit: BoxFit.cover,
+                                  height: 90,
+                                  width: double.infinity,
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    game.name,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  game.name,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

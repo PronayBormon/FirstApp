@@ -16,13 +16,13 @@ class Hoster {
   final int videoId;
   final String title;
   final String thumbSrc;
-  final String api_id;
+  // final String api_id;
 
   Hoster({
     required this.videoId,
     required this.title,
     required this.thumbSrc,
-    required this.api_id,
+    // required this.api_id,
   });
 
   factory Hoster.fromJson(Map<String, dynamic> json) {
@@ -30,7 +30,7 @@ class Hoster {
       videoId: json['video_id'],
       title: json['title'],
       thumbSrc: json['thumb_src'] ?? '', // Ensure this is never null
-      api_id: json['api_id'],
+      // api_id: json['api_id'],
     );
   }
 }
@@ -76,7 +76,7 @@ class _HosterListPageState extends State<HosterListPage> {
     });
     final response = await http.get(
       Uri.parse(
-          'https://api.totomonkey.com/api/public/getMobileAllHosters?page=$page'),
+          'https://api.totomonkey.com/api/public/getAllHosters?page=$page'),
     );
     if (response.statusCode == 200) {
       final jsonData = json.decode(response.body);
@@ -170,8 +170,10 @@ class _HosterListPageState extends State<HosterListPage> {
               return GestureDetector(
                 onTap: () {
                   // print('Navigating to: ${hoster.api_id}');
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => Homepage()));
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const Homepage()));
                 },
                 child: Container(
                   decoration: BoxDecoration(

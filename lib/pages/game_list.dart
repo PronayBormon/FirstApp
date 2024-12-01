@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homepage_project/main-copy.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/games.dart';
@@ -20,11 +21,12 @@ class Game {
   final String name;
   final String imagePath;
 
-  Game(
-      {required this.id,
-      required this.name,
-      required this.imagePath,
-      required this.code});
+  Game({
+    required this.id,
+    required this.name,
+    required this.imagePath,
+    required this.code,
+  });
 
   factory Game.fromJson(Map<String, dynamic> json) {
     return Game(
@@ -39,14 +41,14 @@ class Game {
 class GameListPage extends StatefulWidget {
   final String gameCode;
 
-  const GameListPage({required this.gameCode});
+  const GameListPage({super.key, required this.gameCode});
 
   @override
   _GameListPageState createState() => _GameListPageState();
 }
 
 class _GameListPageState extends State<GameListPage> {
-  late Future<List<Game>> _futureGamesList;
+  late Future<Game> _futureGame;
   final int _selectedIndex = 1;
 
   void _onItemTapped(int index) {
@@ -66,35 +68,49 @@ class _GameListPageState extends State<GameListPage> {
   @override
   void initState() {
     super.initState();
-    _futureGamesList = fetchGamesByCode(widget.gameCode);
+    // Fetch the game when the page is initialized
+    // _futureGame = fetchGameByCode(widget.gameCode);
   }
 
-  // Function to fetch games by gameCode
-  Future<List<Game>> fetchGamesByCode(String gameCode) async {
-    final response = await http.get(Uri.parse(
-        'http://api.totomonkey.com/api/public/gameCategoryGame/$gameCode')); // Your API URL
+  // Future<Game> fetchGameByCode(String gameCode) async {
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse(
+  //           'https://api.totomonkey.com/api/public/checkGameData?slug=$gameCode'), // Dynamically use the gameCode
+  //     );
 
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
-      if (data['success'] == true && data['data'] != null) {
-        List<dynamic> gamesData = data['data']
-            ['allGames']; // Extracting list of games from 'allGames'
-        return gamesData
-            .map((json) => Game.fromJson(json))
-            .toList(); // Mapping to Game objects
-      } else {
-        throw Exception('Failed to load games');
-      }
-    } else {
-      throw Exception('Failed to load games: ${response.statusCode}');
-    }
-  }
+  //     if (response.statusCode == 200) {
+  //       var data = json.decode(response.body);
+  //       print("===========" +
+  //           jsonEncode(data)); // Print the gameCode for debugging
+
+  //       if (data['success']) {
+  //         var gameData = data['data'];
+
+  //         // Ensure the data is a map (a single game) and return a Game object
+  //         if (gameData is Map<String, dynamic>) {
+  //           return Game.fromJson(gameData);
+  //         } else {
+  //           throw Exception(
+  //               'Expected data to be a map, but got ${gameData.runtimeType}');
+  //         }
+  //       } else {
+  //         throw Exception('Failed to load game: ${data['message']}');
+  //       }
+  //     } else {
+  //       throw Exception('Failed to load game: ${response.statusCode}');
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching game: $e');
+  //     rethrow; // Re-throw the error after logging
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(' ${widget.gameCode}', style: TextStyle(color: mainColor)),
+        title: Text(widget.gameCode, style: const TextStyle(color: mainColor)),
         centerTitle: true,
         backgroundColor: secondaryColor,
         leading: GestureDetector(
@@ -119,8 +135,6 @@ class _GameListPageState extends State<GameListPage> {
       ),
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0)),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           selectedItemColor: mainColor,
@@ -137,87 +151,16 @@ class _GameListPageState extends State<GameListPage> {
         ),
       ),
       backgroundColor: primaryColor,
-      body: FutureBuilder<List<Game>>(
-        future: _futureGamesList,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
-            List<Game> games = snapshot.data!;
-
-            return GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3, // 3 columns for the grid
-                childAspectRatio: .99, // Adjusting item aspect ratio
-                crossAxisSpacing: 5,
-                mainAxisSpacing: 0,
-              ),
-              itemCount: games.length,
-              itemBuilder: (context, index) {
-                Game game = games[index];
-
-                return GestureDetector(
-                  onTap: () {
-                    // Navigate to a detailed page for the selected game (if you have one)
-                    // For now, we simply show the game's name
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text(game.name),
-                          content: Text('More details about ${game.name}'),
-                          actions: [
-                            TextButton(
-                              child: const Text('OK'),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  child: Card(
-                    color: primaryColor,
-                    elevation: 0.0,
-                    child: Column(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12.0),
-                          child: Image.network(
-                            game.imagePath,
-                            fit: BoxFit.cover,
-                            height: 90,
-                            width: double.infinity,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            game.name,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+      body: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const Homepage()),
             );
-          } else {
-            return const Center(child: Text('No games available'));
-          }
-        },
+          },
+          child: const Text('Go to MyApp'),
+        ),
       ),
     );
   }

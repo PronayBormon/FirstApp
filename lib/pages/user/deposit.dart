@@ -235,13 +235,13 @@ class _DepositPageState extends State<DepositPage>
                 if (_fiatFormKey.currentState!.validate()) {
                   // Handle fiat deposit action
                   print('Submitting Fiat Deposit:');
-                  print('Method: $selectedMethod');
-                  print('Amount: $_amount');
-                  print('Email: $_email');
-                  print('Bank Name: $_bankName');
-                  print('Branch: $_branch');
-                  print('Account Number: $_accountNumber');
-                  print('Mobile Number: $_mobileNumber');
+                  // print('Method: $selectedMethod');
+                  // print('Amount: $_amount');
+                  // print('Email: $_email');
+                  // print('Bank Name: $_bankName');
+                  // print('Branch: $_branch');
+                  // print('Account Number: $_accountNumber');
+                  // print('Mobile Number: $_mobileNumber');
                 }
               },
               style: ElevatedButton.styleFrom(

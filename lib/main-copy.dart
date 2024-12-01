@@ -3,8 +3,6 @@ import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/slider.dart';
 
 void main() {
-  WidgetsFlutterBinding
-      .ensureInitialized(); // Ensure Flutter plugins are initialized
   runApp(const MyApp());
 }
 
@@ -17,7 +15,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Homepage(),
-      title: 'FansGames',
+      title: 'Your App Title',
     );
   }
 }
