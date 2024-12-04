@@ -8,7 +8,7 @@ import '../user/profile.dart';
 import '../games.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
-final _secureStorage = const FlutterSecureStorage();
+const _secureStorage = FlutterSecureStorage();
 
 class OffcanvasMenu extends StatelessWidget {
   const OffcanvasMenu({super.key});

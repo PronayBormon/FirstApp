@@ -351,7 +351,7 @@ class _SignUpState extends State<SignUp> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start, // Ensure left alignment
         children: [
-          Text(
+          const Text(
             'Password Requirements:',
             style: TextStyle(color: Colors.white70, fontSize: 12),
           ),

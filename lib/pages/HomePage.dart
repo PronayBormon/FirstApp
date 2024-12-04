@@ -77,40 +77,6 @@ class _HomepageState extends State<Homepage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        elevation: 2.0,
-        shadowColor: Colors.black,
-        backgroundColor: const Color.fromRGBO(41, 45, 46, 1),
-        leading: GestureDetector(
-          onTap: () {
-            // Handle back action if needed
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Image.asset(
-              'assets/images/logo.png',
-              height: 25,
-              width: 25,
-            ),
-          ),
-        ),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-        ],
-      ),
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: ClipRRect(
         child: BottomNavigationBar(

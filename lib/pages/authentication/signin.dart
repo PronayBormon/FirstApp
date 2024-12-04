@@ -10,7 +10,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
 const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
-final _secureStorage = const FlutterSecureStorage();
+const _secureStorage = FlutterSecureStorage();
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
@@ -58,6 +58,7 @@ class _SignInState extends State<SignIn> {
   // Check if access token exists and redirect
   void _checkTokenAndRedirect() async {
     final token = await _secureStorage.read(key: 'access_token');
+    print('Token: $token'); // Debug log
     if (token != null && token.isNotEmpty) {
       Navigator.pushReplacement(
         context,
@@ -78,12 +79,15 @@ class _SignInState extends State<SignIn> {
         // Call the API
         final result = await API().postRequest(route: "/userLogin", data: data);
         final response = jsonDecode(result.body);
-        final userdata = response['user'];
-        final status_ = response['status'];
+        print("API Response: $response"); // Debug log
 
-        if (status_ == 200) {
+        final userdata = response['user'];
+        final status = response['status'];
+
+        if (status == 200) {
           // Save session details securely
-          await _secureStorage.write(key: 'userdata', value: response ?? '');
+          await _secureStorage.write(
+              key: 'userdata', value: jsonEncode(response));
           await _secureStorage.write(
               key: 'access_token', value: response['access_token'] ?? '');
           await _secureStorage.write(
@@ -102,8 +106,8 @@ class _SignInState extends State<SignIn> {
           _showError(response['message'] ?? 'Login failed. Please try again.');
         }
       } catch (error) {
+        print("Error during login: $error"); // Debug log
         _showError('An error occurred. Please try again.');
-        debugPrint('Error during login: $error');
       }
     }
   }
@@ -119,7 +123,7 @@ class _SignInState extends State<SignIn> {
         centerTitle: true,
         elevation: 2.0,
         shadowColor: Colors.black,
-        backgroundColor: const Color.fromRGBO(41, 45, 46, 1),
+        backgroundColor: secondaryColor,
         leading: GestureDetector(
           onTap: () {
             Navigator.pop(context);
@@ -151,7 +155,7 @@ class _SignInState extends State<SignIn> {
         ],
       ),
       drawer: const OffcanvasMenu(),
-      backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
+      backgroundColor: primaryColor,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -177,7 +181,7 @@ class _SignInState extends State<SignIn> {
                   labelText: 'Username',
                   labelStyle: const TextStyle(color: Colors.white),
                   filled: true,
-                  fillColor: primaryColor,
+                  fillColor: secondaryColor,
                   border: OutlineInputBorder(
                     borderSide: const BorderSide(color: Colors.white70),
                     borderRadius: BorderRadius.circular(8.0),
@@ -206,7 +210,7 @@ class _SignInState extends State<SignIn> {
                   labelText: 'Password',
                   labelStyle: const TextStyle(color: Colors.white),
                   filled: true,
-                  fillColor: primaryColor,
+                  fillColor: secondaryColor,
                   border: OutlineInputBorder(
                     borderSide: const BorderSide(color: Colors.white70),
                     borderRadius: BorderRadius.circular(8.0),
