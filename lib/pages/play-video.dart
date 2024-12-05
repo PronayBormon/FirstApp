@@ -1,8 +1,6 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:homepage_project/methods/gameApi.dart'; // Adjusted class name
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
@@ -11,14 +9,13 @@ import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 
-// Define colors
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
 const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
 const _secureStorage = FlutterSecureStorage();
 
-// Game class for single data
 class Game {
   final String url;
 
@@ -26,41 +23,35 @@ class Game {
 
   factory Game.fromJson(Map<String, dynamic> json) {
     return Game(
-      url: json['url'],
+      url: json['url'] ?? '',
     );
   }
 }
 
-class HtmlPage extends StatefulWidget {
-  final String gameCode;
+class playVideoPage extends StatefulWidget {
+  final String videoUrl;
 
-  const HtmlPage({super.key, required this.gameCode});
+  const playVideoPage({super.key, required this.videoUrl});
 
   @override
-  _HtmlPageState createState() => _HtmlPageState();
+  _playVideoPageState createState() => _playVideoPageState();
 }
 
-class _HtmlPageState extends State<HtmlPage> {
-  late Future<Game> _futureGame; // Type should be Future<Game>
+class _playVideoPageState extends State<playVideoPage> {
+  late Future<Game> _futureGame;
   late InAppWebViewController _webViewController;
-  String? gameUrl; // Variable to hold the game URL
-
-  final int _selectedIndex = 1;
+  String? videoUrl;
+  final int _selectedIndex = 2;
 
   @override
   void initState() {
     super.initState();
-    _futureGame = fetchGame(widget.gameCode); // This now returns Future<Game>
+    // _futureGame = fetchVideo(widget.videoUrl);
     _checkTokenAndRedirect();
   }
 
-  // Check if access token exists and redirect
   void _checkTokenAndRedirect() async {
     final token = await _secureStorage.read(key: 'access_token');
-    final userdata = await _secureStorage.read(key: 'userdata');
-
-    print('Token: $token'); // Debug log
-    // print('UserData: $userdata'); // Debug log
 
     if (token == null) {
       Navigator.pushReplacement(
@@ -70,31 +61,24 @@ class _HtmlPageState extends State<HtmlPage> {
     }
   }
 
-  // This now returns a Future<Game>
-  Future<Game> fetchGame(String gameCode) async {
-    final data = {'slug': gameCode};
-    try {
-      final result = await GameApiService()
-          .postRequestData(route: "/games/requesttoGame", data: data);
+  // Future<Game> fetchVideo(String videoUrl) async {
+  //   print("++++++++++++++++++++++================+++++++++++ {$videoUrl}");
+  //   try {
+  //     final response = await http.get(
+  //       Uri.parse(
+  //           'https://api.totomonkey.com/api/public/getVideoDetails?url=$videoUrl'),
+  //     );
 
-      final response = jsonDecode(result.body);
-      final url = response["url"];
-
-      print(
-          '==============================================================================Server Response: $url');
-
-      // If URL is found, return the Game object
-      if (url != null) {
-        return Game(url: url); // Return the Game object
-      } else {
-        throw Exception("Game URL not found in response");
-      }
-    } catch (e) {
-      print("Error fetching game: $e");
-      // Handle any errors (you can show a dialog or message here)
-      throw Exception("Error fetching game: $e");
-    }
-  }
+  //     if (response.statusCode == 200) {
+  //       final jsonData = json.decode(response.body);
+  //       return Game.fromJson(jsonData['data']);
+  //     } else {
+  //       throw Exception('Failed to fetch video data');
+  //     }
+  //   } catch (e) {
+  //     throw Exception('Error fetching video: $e');
+  //   }
+  // }
 
   void _onItemTapped(int index) {
     final pages = [
@@ -109,7 +93,6 @@ class _HtmlPageState extends State<HtmlPage> {
     );
   }
 
-  // Function to show a popup (AlertDialog) when there's an error
   void _showErrorDialog(String errorMessage) {
     showDialog(
       context: context,
@@ -120,7 +103,7 @@ class _HtmlPageState extends State<HtmlPage> {
           actions: <Widget>[
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
               child: const Text("OK"),
             ),
@@ -134,22 +117,30 @@ class _HtmlPageState extends State<HtmlPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.gameCode, style: const TextStyle(color: mainColor)),
+        title: Text(widget.videoUrl, style: const TextStyle(color: mainColor)),
         centerTitle: true,
         backgroundColor: secondaryColor,
         leading: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset('assets/icons/chevron-left.svg',
-                color: Colors.white, height: 25, width: 25),
+            child: SvgPicture.asset(
+              'assets/icons/chevron-left.svg',
+              color: Colors.white,
+              height: 25,
+              width: 25,
+            ),
           ),
         ),
         actions: [
           Builder(
             builder: (context) => IconButton(
-              icon: SvgPicture.asset('assets/icons/menu.svg',
-                  color: Colors.white, height: 25, width: 25),
+              icon: SvgPicture.asset(
+                'assets/icons/menu.svg',
+                color: Colors.white,
+                height: 25,
+                width: 25,
+              ),
               onPressed: () {
                 Scaffold.of(context).openDrawer();
               },
@@ -183,39 +174,18 @@ class _HtmlPageState extends State<HtmlPage> {
         ),
       ),
       backgroundColor: primaryColor,
-      body: FutureBuilder<Game>(
-        future: _futureGame, // Use the future that returns Game
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            // Show error dialog on error
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _showErrorDialog('Error: ${snapshot.error}');
-            });
-            return Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasData) {
-            // When the data is fetched successfully, display the web view
-            gameUrl = snapshot.data?.url; // Get the URL from the fetched data
-
-            return InAppWebView(
-              initialUrlRequest: URLRequest(
-                url: WebUri(gameUrl!),
-              ),
-              onWebViewCreated: (InAppWebViewController controller) {
-                _webViewController = controller;
-              },
-              onLoadStart: (InAppWebViewController controller, WebUri? url) {
-                print("Page Started: $url");
-              },
-              onLoadStop:
-                  (InAppWebViewController controller, WebUri? url) async {
-                print("Page Loaded: $url");
-              },
-            );
-          } else {
-            return Center(child: Text('No game URL found'));
-          }
+      body: InAppWebView(
+        initialUrlRequest: URLRequest(
+          url: WebUri(widget.videoUrl), // Use WebUri instead of Uri
+        ),
+        onWebViewCreated: (InAppWebViewController controller) {
+          _webViewController = controller;
+        },
+        onLoadStart: (InAppWebViewController controller, WebUri? url) {
+          print("Page Started: $url");
+        },
+        onLoadStop: (InAppWebViewController controller, WebUri? url) async {
+          print("Page Loaded: $url");
         },
       ),
     );

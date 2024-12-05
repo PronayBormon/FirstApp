@@ -153,7 +153,7 @@ class _GamesPageState extends State<GamesPage> {
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: Colors.red, // <-- Set your desired background color here
+          color: Colors.red,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(30.0),
             topRight: Radius.circular(30.0),
@@ -161,10 +161,9 @@ class _GamesPageState extends State<GamesPage> {
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          selectedItemColor: mainColor, // Color for selected items
-          unselectedItemColor: Colors.black54, // Color for unselected items
-          backgroundColor: Colors
-              .transparent, // Set to transparent to allow container's color to show
+          selectedItemColor: mainColor,
+          unselectedItemColor: Colors.black54,
+          backgroundColor: Colors.transparent,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
@@ -290,6 +289,32 @@ class _GamesPageState extends State<GamesPage> {
                       child:
                           CircularProgressIndicator()); // Show loading indicator
                 } else if (snapshot.hasError) {
+                  // Display error in a SnackBar
+                  Future.delayed(Duration.zero, () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: ${snapshot.error}')),
+                    );
+                  });
+
+                  // Or show an AlertDialog for a more prominent error message
+                  Future.delayed(Duration.zero, () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Error"),
+                        content: Text('Error: ${snapshot.error}'),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pop(); // Close dialog
+                            },
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  });
+
                   return Center(child: Text('Error: ${snapshot.error}'));
                 }
 
