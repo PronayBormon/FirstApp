@@ -4,6 +4,7 @@ import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/game_list.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/play-Game.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -117,7 +118,7 @@ class _GamesPageState extends State<GamesPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => GameListPage(gameCode: game.slug),
+        builder: (context) => HtmlPage(gameCode: game.slug),
       ),
     );
   }

@@ -58,7 +58,11 @@ class _SignInState extends State<SignIn> {
   // Check if access token exists and redirect
   void _checkTokenAndRedirect() async {
     final token = await _secureStorage.read(key: 'access_token');
+    final userdata = await _secureStorage.read(key: 'userdata');
+
     print('Token: $token'); // Debug log
+    print('UserData: $userdata'); // Debug log
+
     if (token != null && token.isNotEmpty) {
       Navigator.pushReplacement(
         context,
