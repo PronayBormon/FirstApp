@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/games.dart';
-import 'package:homepage_project/pages/hoster-profile.dart';
+import 'package:homepage_project/pages/==========hoster-profile.dart';
 import 'package:homepage_project/pages/play-video.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:http/http.dart' as http;
@@ -134,8 +134,8 @@ class _HosterListPageState extends State<HosterListPage> {
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30.0),
-          topRight: Radius.circular(30.0),
+          topLeft: Radius.circular(0.0),
+          topRight: Radius.circular(0.0),
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,

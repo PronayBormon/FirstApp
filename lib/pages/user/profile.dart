@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/HomePage.dart';
+import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
@@ -19,6 +20,7 @@ import 'package:homepage_project/pages/user/share.dart';
 import 'package:homepage_project/pages/user/transections.dart';
 import 'package:homepage_project/pages/user/wallet.dart';
 import 'package:homepage_project/pages/user/withdraw.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -29,6 +31,7 @@ const pinkGradient = LinearGradient(
     Color.fromRGBO(229, 15, 112, 1),
   ],
 );
+const _secureStorage = FlutterSecureStorage();
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -40,6 +43,24 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 3;
 
+  @override
+  void initState() {
+    super.initState();
+    // _futureGame = fetchVideo(widget.videoUrl);
+    // _checkTokenAndRedirect();
+  }
+
+  void _checkTokenAndRedirect() async {
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignIn()),
+      );
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -47,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     List<Widget> pages = [
       const Homepage(),
-      // const GamesPage(),
+      const GamesPage(),
       const HosterListPage(),
       const ProfilePage(),
     ];
@@ -67,12 +88,9 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         title: const Text('Profile', style: TextStyle(color: mainColor)),
         centerTitle: true,
-        elevation: 2.0,
         backgroundColor: secondaryColor,
         leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
+          onTap: () => Navigator.pop(context),
           child: Padding(
             padding: const EdgeInsets.all(8.0),
             child: SvgPicture.asset(
@@ -84,24 +102,26 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: SvgPicture.asset(
-              'assets/icons/menu.svg',
-              color: Colors.white,
-              height: 25,
-              width: 25,
+          Builder(
+            builder: (context) => IconButton(
+              icon: SvgPicture.asset(
+                'assets/icons/menu.svg',
+                color: Colors.white,
+                height: 25,
+                width: 25,
+              ),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
             ),
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
           ),
         ],
       ),
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30.0),
-          topRight: Radius.circular(30.0),
+          topLeft: Radius.circular(0.0),
+          topRight: Radius.circular(0.0),
         ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,

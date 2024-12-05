@@ -47,7 +47,7 @@ class _playVideoPageState extends State<playVideoPage> {
   void initState() {
     super.initState();
     // _futureGame = fetchVideo(widget.videoUrl);
-    _checkTokenAndRedirect();
+    // _checkTokenAndRedirect();
   }
 
   void _checkTokenAndRedirect() async {
@@ -117,7 +117,7 @@ class _playVideoPageState extends State<playVideoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.videoUrl, style: const TextStyle(color: mainColor)),
+        // title: Text(widget.videoUrl, style: const TextStyle(color: mainColor)),
         centerTitle: true,
         backgroundColor: secondaryColor,
         leading: GestureDetector(

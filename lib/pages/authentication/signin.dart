@@ -262,6 +262,13 @@ class _SignInState extends State<SignIn> {
                   style: TextStyle(color: Colors.white),
                 ),
               ),
+              const SizedBox(height: 20),
+              const Text(
+                'Or Signin with',
+                style: TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 10),
+              _buildSocialButtons(),
               const SizedBox(height: 10.0),
               TextButton(
                 onPressed: () {
@@ -284,4 +291,60 @@ class _SignInState extends State<SignIn> {
       ),
     );
   }
+}
+
+Widget _buildSocialButtons() {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      ElevatedButton(
+        onPressed: () {
+          // Add Google Sign-Up logic
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          minimumSize: const Size(50, 50),
+          elevation: 2.0,
+          shape: const CircleBorder(), // Makes the button circular
+        ),
+        child: Image.asset(
+          'assets/images/google.png',
+          height: 24,
+          width: 24,
+        ),
+      ),
+      ElevatedButton(
+        onPressed: () {
+          // Add Twitter Sign-Up logic
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          minimumSize: const Size(50, 50),
+          elevation: 2.0,
+          shape: const CircleBorder(),
+        ),
+        child: Image.asset(
+          'assets/images/twitter.png',
+          height: 24,
+          width: 24,
+        ),
+      ),
+      ElevatedButton(
+        onPressed: () {
+          // Add Twitter Sign-Up logic
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color.fromARGB(255, 0, 118, 214),
+          minimumSize: const Size(50, 50),
+          elevation: 2.0,
+          shape: const CircleBorder(),
+        ),
+        child: Image.asset(
+          'assets/images/facebook.png',
+          height: 34,
+          width: 34,
+        ),
+      ),
+    ],
+  );
 }

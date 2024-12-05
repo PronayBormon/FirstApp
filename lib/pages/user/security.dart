@@ -75,7 +75,7 @@ class _SecurityPageState extends State<SecurityPage> {
       ),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(30.0), topRight: Radius.circular(30.0)),
+            topLeft: Radius.circular(0.0), topRight: Radius.circular(0.0)),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           selectedItemColor: mainColor,
