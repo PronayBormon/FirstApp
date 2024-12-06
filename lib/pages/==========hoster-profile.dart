@@ -23,7 +23,7 @@ class _HosterProfileState extends State<hosterProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title:
-            Text("widget.videoUrl", style: const TextStyle(color: mainColor)),
+            const Text("widget.videoUrl", style: TextStyle(color: mainColor)),
         centerTitle: true,
         backgroundColor: secondaryColor,
         leading: GestureDetector(

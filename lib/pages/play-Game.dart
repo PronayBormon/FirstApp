@@ -187,13 +187,13 @@ class _HtmlPageState extends State<HtmlPage> {
         future: _futureGame, // Use the future that returns Game
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             // Show error dialog on error
             WidgetsBinding.instance.addPostFrameCallback((_) {
               _showErrorDialog('Error: ${snapshot.error}');
             });
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasData) {
             // When the data is fetched successfully, display the web view
             gameUrl = snapshot.data?.url; // Get the URL from the fetched data
@@ -214,7 +214,7 @@ class _HtmlPageState extends State<HtmlPage> {
               },
             );
           } else {
-            return Center(child: Text('No game URL found'));
+            return const Center(child: Text('No game URL found'));
           }
         },
       ),
