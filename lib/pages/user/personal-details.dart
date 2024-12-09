@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/user/profile.dart';
 import 'package:homepage_project/pages/user/wallet.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
@@ -67,7 +68,8 @@ class _PersonalDetailsState extends State<PersonalDetails> {
         backgroundColor: secondaryColor,
         leading: GestureDetector(
           onTap: () {
-            Navigator.pop(context);
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const ProfilePage()));
           },
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -107,21 +109,31 @@ class _PersonalDetailsState extends State<PersonalDetails> {
         ],
       ),
       bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(0.0),
-          topRight: Radius.circular(0.0),
-        ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
+          // selectedItemColor: mainColor,
+          unselectedItemColor: Colors.white54,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.sports_esports), label: 'Games'),
+              icon: Icon(Icons.home),
+              label: 'Home',
+              backgroundColor: secondaryColor,
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.play_circle), label: 'Model'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+              icon: Icon(Icons.sports_esports),
+              label: 'Games',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.play_circle),
+              label: 'Model',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+              backgroundColor: secondaryColor,
+            ),
           ],
           onTap: _onItemTapped,
         ),

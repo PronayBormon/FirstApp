@@ -1,18 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:homepage_project/helper/constant.dart';
 import 'package:homepage_project/pages/HomePage.dart';
+import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/game_list.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/play-Game.dart';
+import 'package:homepage_project/pages/user/deposit.dart';
+import 'package:homepage_project/pages/user/personal-details.dart';
 import 'package:homepage_project/pages/user/profile.dart';
+import 'package:homepage_project/pages/user/transections.dart';
+import 'package:homepage_project/pages/user/wallet.dart';
+import 'package:homepage_project/pages/user/withdraw.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:marquee/marquee.dart';
+import 'package:shimmer/shimmer.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
 const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
+const pinkGradient = LinearGradient(
+  colors: [
+    Color.fromRGBO(228, 62, 229, 1),
+    Color.fromRGBO(229, 15, 112, 1),
+  ],
+);
+const _secureStorage = FlutterSecureStorage();
 
 class Game {
   final int id;
@@ -48,6 +64,22 @@ class _GamesPageState extends State<GamesPage> {
   late Future<List<Game>> _futureGames;
   final int _selectedIndex = 1;
   String _selectedFilter = "All";
+  bool _isLoggedIn = false; // Simple boolean state
+
+  @override
+  void initState() {
+    super.initState();
+    _futureGames = fetchAllGames();
+    _checkLoginStatus();
+  }
+
+  // Check if the token exists and update state
+  Future<void> _checkLoginStatus() async {
+    final token = await _secureStorage.read(key: 'access_token');
+    setState(() {
+      _isLoggedIn = token != null;
+    });
+  }
 
   void _onItemTapped(int index) {
     List<Widget> pages = [
@@ -61,12 +93,6 @@ class _GamesPageState extends State<GamesPage> {
       context,
       MaterialPageRoute(builder: (context) => pages[index]),
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _futureGames = fetchAllGames();
   }
 
   Future<List<Game>> fetchAllGames() async {
@@ -127,217 +153,369 @@ class _GamesPageState extends State<GamesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Games', style: TextStyle(color: mainColor)),
         centerTitle: true,
         backgroundColor: secondaryColor,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset('assets/icons/chevron-left.svg',
-                color: Colors.white, height: 25, width: 25),
+        toolbarHeight: 80,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 0), // Adjust padding for logo
+          child: Container(
+            margin: EdgeInsets.only(left: 15),
+            child: Image.asset(
+              'assets/images/logo-Old.png', // Replace with your logo path
+              // fit: BoxFit.contain,
+              // height: 200, // Larger logo size
+              // width: 80,
+            ),
           ),
         ),
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset('assets/icons/menu.svg',
-                  color: Colors.white, height: 25, width: 25),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
+          _isLoggedIn
+              ? Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Row(
+                    children: [
+                      const Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "Balance:",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            "\$00.00",
+                            style: TextStyle(
+                              color: Colors.greenAccent,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 15),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const ProfilePage()),
+                          );
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.all(2.0),
+                          child: CircleAvatar(
+                            backgroundImage:
+                                AssetImage('assets/images/Avatar_image.png'),
+                            radius: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: mainColor,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(5),
+                          child: GestureDetector(
+                            onTap: () => {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SignIn(),
+                                  ))
+                            },
+                            child: Text(
+                              "Login",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
         ],
       ),
-      drawer: const OffcanvasMenu(),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.0),
-            topRight: Radius.circular(30.0),
+        child: Container(
+          color: Colors.blue,
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            selectedItemColor: mainColor,
+            unselectedItemColor: Colors.white54,
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.sports_esports),
+                label: 'Games',
+                backgroundColor: secondaryColor,
+              ),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.play_circle), label: 'Betting'),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.person), label: 'Profile'),
+            ],
+            onTap: _onItemTapped,
           ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
-          backgroundColor: Colors.transparent,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.sports_esports), label: 'Games'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.play_circle), label: 'Betting'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          ],
-          onTap: _onItemTapped,
         ),
       ),
       backgroundColor: primaryColor,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedFilter = "All";
-                        _futureGames = fetchAllGames();
-                      });
+      body: CustomScrollView(
+        slivers: [
+          // Options Grid for Balance
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                childAspectRatio: 1.25,
+                crossAxisSpacing: 3,
+                mainAxisSpacing: 3,
+              ),
+              delegate: SliverChildListDelegate(
+                [
+                  GestureDetector(
+                    onTap: () => {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PersonalDetails(),
+                        ),
+                      ),
                     },
-                    child: const Text("All"),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return pinkGradient.createShader(bounds);
+                          },
+                          child: const Icon(Icons.person,
+                              size: 25, color: Colors.white),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text("Personal Details",
+                            textAlign:
+                                TextAlign.center, // Align text to the center
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            )),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedFilter = "pg";
-                        _futureGames = fetchFilteredGames("pg");
-                      });
+                  GestureDetector(
+                    onTap: () => {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const WalletPage(),
+                        ),
+                      ),
                     },
-                    child: const Text("PG"),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return pinkGradient.createShader(bounds);
+                          },
+                          child: const Icon(Icons.account_balance_wallet,
+                              size: 25, color: Colors.white),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text("Wallet",
+                            textAlign:
+                                TextAlign.center, // Align text to the center
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            )),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedFilter = "jili";
-                        _futureGames = fetchFilteredGames("jili");
-                      });
+                  GestureDetector(
+                    onTap: () => {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DepositPage(),
+                        ),
+                      ),
                     },
-                    child: const Text("JILI"),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return pinkGradient.createShader(bounds);
+                          },
+                          child: const Icon(Icons.download,
+                              size: 25, color: Colors.white),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text("Deposit",
+                            textAlign:
+                                TextAlign.center, // Align text to the center
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            )),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedFilter = "pp_max";
-                        _futureGames = fetchFilteredGames("pp_max");
-                      });
+                  GestureDetector(
+                    onTap: () => {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const WithdrawPage(),
+                        ),
+                      ),
                     },
-                    child: const Text("PP Max"),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return pinkGradient.createShader(bounds);
+                          },
+                          child: const Icon(Icons.upload,
+                              size: 25, color: Colors.white),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text("Withdraw",
+                            textAlign:
+                                TextAlign.center, // Align text to the center
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            )),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedFilter = "omg_min";
-                        _futureGames = fetchFilteredGames("omg_min");
-                      });
+                  GestureDetector(
+                    onTap: () => {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const Transection(),
+                        ),
+                      ),
                     },
-                    child: const Text("OMG Man"),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedFilter = "mini_game";
-                        _futureGames = fetchFilteredGames("mini_game");
-                      });
-                    },
-                    child: const Text("MINI GAME"),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedFilter = "omg_crypto";
-                        _futureGames = fetchFilteredGames("omg_crypto");
-                      });
-                    },
-                    child: const Text("OMG Crypto"),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedFilter = "hacksaw";
-                        _futureGames = fetchFilteredGames("hacksaw");
-                      });
-                    },
-                    child: const Text("Hacksaw"),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedFilter = "pp";
-                        _futureGames = fetchFilteredGames("pp");
-                      });
-                    },
-                    child: const Text("PP"),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return pinkGradient.createShader(bounds);
+                          },
+                          child: const Icon(Icons.history,
+                              size: 25, color: Colors.white),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text("Transections",
+                            textAlign:
+                                TextAlign.center, // Align text to the center
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            )),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
 
-          // Simple loading indicator while data is loading
-          Expanded(
-            child: FutureBuilder<List<Game>>(
+          SliverPersistentHeader(
+            pinned: true,
+            floating: false,
+            delegate: _StickyHeaderDelegate(
+              onFilterSelected: (filter) {
+                setState(() {
+                  _selectedFilter = filter;
+                  _futureGames = fetchFilteredGames(_selectedFilter);
+                });
+              },
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            sliver: FutureBuilder<List<Game>>(
               future: _futureGames,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                      child:
-                          CircularProgressIndicator()); // Show loading indicator
-                } else if (snapshot.hasError) {
-                  // Display error in a SnackBar
-                  Future.delayed(Duration.zero, () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error: ${snapshot.error}')),
-                    );
-                  });
-
-                  // Or show an AlertDialog for a more prominent error message
-                  Future.delayed(Duration.zero, () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Error"),
-                        content: Text('Error: ${snapshot.error}'),
-                        actions: <Widget>[
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pop(); // Close dialog
-                            },
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
-                    );
-                  });
-
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                final games = snapshot.data!;
-
-                return Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: GridView.builder(
+                  return SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
-                      childAspectRatio: .90,
-                      crossAxisSpacing: 5,
-                      mainAxisSpacing: 0,
+                      childAspectRatio: .89,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
                     ),
-                    itemCount: games.length,
-                    itemBuilder: (context, index) {
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Container(
+                        child: Center(
+                          child: Shimmer.fromColors(
+                            baseColor: secondaryColor,
+                            highlightColor:
+                                const Color.fromARGB(255, 94, 93, 93),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: secondaryColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      childCount: 10,
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return SliverToBoxAdapter(
+                    child: Center(
+                      child: Text('Error: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red)),
+                    ),
+                  );
+                }
+
+                final games = snapshot.data!;
+                return SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: .82,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
                       final game = games[index];
                       return GestureDetector(
                         onTap: () => _onGameTapped(game),
-                        child: Card(
-                          color: primaryColor,
-                          elevation: 0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                              color: secondaryColor,
+                              borderRadius: BorderRadius.circular(10)),
                           child: Column(
                             children: [
                               ClipRRect(
@@ -345,7 +523,7 @@ class _GamesPageState extends State<GamesPage> {
                                 child: Image.network(
                                   game.imagePath,
                                   fit: BoxFit.cover,
-                                  height: 90,
+                                  height: 85,
                                   width: double.infinity,
                                 ),
                               ),
@@ -367,12 +545,133 @@ class _GamesPageState extends State<GamesPage> {
                         ),
                       );
                     },
+                    childCount: games.length,
                   ),
                 );
               },
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Function(String) onFilterSelected;
+
+  _StickyHeaderDelegate({required this.onFilterSelected});
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: primaryColor,
+      child: Padding(
+        padding:
+            const EdgeInsets.only(left: 20, top: 10, right: 20, bottom: 15),
+        child: Container(
+          height: 140,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: secondaryColor,
+          ),
+          // color: Colors.red,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildHeaderButton(context, 'pg', 'assets/images/pg.png'),
+                _buildHeaderButton(context, 'jili', 'assets/images/jili.png'),
+                _buildHeaderButton(context, 'pp_max', 'assets/images/pp.jpeg'),
+                _buildHeaderButton(
+                    context, 'omg_man', 'assets/images/placeholder.jpg'),
+                _buildHeaderButton(
+                    context, 'mini_game', 'assets/images/placeholder.jpg'),
+                _buildHeaderButton(
+                    context, 'omg_crypto', 'assets/images/placeholder.jpg'),
+                _buildHeaderButton(
+                    context, 'hacksaw', 'assets/images/placeholder.jpg'),
+                _buildHeaderButton(context, 'pp', 'assets/images/pp.jpeg'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderButton(
+      BuildContext context, String filter, String assetPath) {
+    return GestureDetector(
+      onTap: () => onFilterSelected(filter),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        height: 100,
+        width: 80,
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+        child: Column(
+          children: [
+            ClipOval(
+              child: Container(
+                color: secondaryColor,
+                child: Image.asset(
+                  assetPath,
+                  height: 40,
+                  width: 40,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+            Text(
+              filter.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.white,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  double get maxExtent => 120;
+
+  @override
+  double get minExtent => 120;
+
+  @override
+  bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) => true;
+
+  Widget _gridItem(
+      BuildContext context, IconData icon, String title, Widget page) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
+      },
+      child: Container(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ShaderMask(
+              shaderCallback: (Rect bounds) {
+                return pinkGradient.createShader(bounds);
+              },
+              child: Icon(icon, size: 25, color: Colors.white),
+            ),
+            const SizedBox(height: 5),
+            Text(title,
+                textAlign: TextAlign.center, // Align text to the center
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                )),
+          ],
+        ),
       ),
     );
   }

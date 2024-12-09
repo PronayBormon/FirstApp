@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:homepage_project/pages/HomePage.dart';
-import 'package:homepage_project/pages/components/Sidebar.dart';
+import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/games.dart';
-import 'package:homepage_project/pages/==========hoster-profile.dart';
 import 'package:homepage_project/pages/play-video.dart';
+import 'package:homepage_project/pages/user/affiliate.dart';
 import 'package:homepage_project/pages/user/profile.dart';
+import 'package:marquee/marquee.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'dart:ui';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
 const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
+const _secureStorage = FlutterSecureStorage();
 
 class Hoster {
   final int videoId;
@@ -44,11 +48,24 @@ class HosterListPage extends StatefulWidget {
 }
 
 class _HosterListPageState extends State<HosterListPage> {
-  final List<Hoster> _hosters = [];
-  int _currentPage = 1;
-  int _totalPages = 1;
-  bool _isLoading = false;
   final int _selectedIndex = 2;
+  late Future<List<Hoster>> _futureHosters;
+  bool _isLoggedIn = false; // Simple boolean state
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+    _futureHosters = _fetchHosters();
+  }
+
+  // Check if the token exists and update state
+  Future<void> _checkLoginStatus() async {
+    final token = await _secureStorage.read(key: 'access_token');
+    setState(() {
+      _isLoggedIn = token != null;
+    });
+  }
 
   void _onItemTapped(int index) {
     List<Widget> pages = [
@@ -64,35 +81,23 @@ class _HosterListPageState extends State<HosterListPage> {
     );
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchHosters(_currentPage);
-  }
+  Future<List<Hoster>> _fetchHosters() async {
+    try {
+      final response = await http.get(
+        Uri.parse('https://api.totomonkey.com/api/public/getAllHosters?page=1'),
+      );
 
-  Future<void> _fetchHosters(int page) async {
-    if (_isLoading || page > _totalPages) return;
-    setState(() {
-      _isLoading = true;
-    });
-
-    final response = await http.get(
-      Uri.parse(
-          'https://api.totomonkey.com/api/public/getAllHosters?page=$page'),
-    );
-
-    if (response.statusCode == 200) {
-      final jsonData = json.decode(response.body);
-      setState(() {
-        _hosters.addAll(List<Hoster>.from(
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        return List<Hoster>.from(
           jsonData['data'].map((hoster) => Hoster.fromJson(hoster)),
-        ));
-        _currentPage = jsonData['current_page'];
-        _totalPages = jsonData['last_page'];
-        _isLoading = false;
-      });
-    } else {
-      throw Exception('Failed to load hosters');
+        );
+      } else {
+        throw Exception('Failed to load hosters');
+      }
+    } catch (e) {
+      print(e);
+      return [];
     }
   }
 
@@ -100,134 +105,336 @@ class _HosterListPageState extends State<HosterListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hosters', style: TextStyle(color: mainColor)),
         centerTitle: true,
         backgroundColor: secondaryColor,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset(
-              'assets/icons/chevron-left.svg',
-              color: Colors.white,
-              height: 25,
-              width: 25,
+        toolbarHeight: 80,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 0), // Adjust padding for logo
+          child: Container(
+            margin: EdgeInsets.only(left: 15),
+            child: Image.asset(
+              'assets/images/logo-Old.png', // Replace with your logo path
+              // fit: BoxFit.contain,
+              // height: 200, // Larger logo size
+              // width: 80,
             ),
           ),
         ),
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-        ],
-      ),
-      drawer: const OffcanvasMenu(),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(0.0),
-          topRight: Radius.circular(0.0),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.sports_esports), label: 'Games'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.play_circle), label: 'Hoster'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          ],
-          onTap: _onItemTapped,
-        ),
-      ),
-      backgroundColor: primaryColor,
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (ScrollNotification scrollInfo) {
-          if (!_isLoading &&
-              scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-            _fetchHosters(_currentPage + 1);
-          }
-          return false;
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              childAspectRatio: .9,
-              crossAxisSpacing: 8.0,
-              mainAxisSpacing: 8.0,
-            ),
-            itemCount: _hosters.length + (_isLoading ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == _hosters.length) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              final hoster = _hosters[index];
-
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          playVideoPage(videoUrl: hoster.embed),
-                    ),
-                  );
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: primaryColor,
-                  ),
-                  child: Column(
+          _isLoggedIn
+              ? Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Row(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.network(
-                          hoster.thumbSrc,
-                          height: 75,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset(
-                              'assets/images/placeholder.jpg',
-                              height: 75,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            );
-                          },
-                        ),
+                      const Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "Balance:",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            "\$00.00",
+                            style: TextStyle(
+                              color: Colors.greenAccent,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 5),
-                      Text(
-                        hoster.title.isEmpty
-                            ? 'No Title Available'
-                            : hoster.title,
-                        style: const TextStyle(color: Colors.white),
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(width: 15),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const ProfilePage()),
+                          );
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.all(2.0),
+                          child: CircleAvatar(
+                            backgroundImage:
+                                AssetImage('assets/images/Avatar_image.png'),
+                            radius: 18,
+                          ),
+                        ),
                       ),
                     ],
                   ),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: mainColor,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(5),
+                          child: GestureDetector(
+                            onTap: () => {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SignIn(),
+                                  ))
+                            },
+                            child: Text(
+                              "Login",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
                 ),
-              );
-            },
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: mainColor,
+        unselectedItemColor:
+            Colors.grey, // Optionally, adjust unselected item color
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.sports_esports), label: 'Games'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle),
+            label: 'Hoster',
+            backgroundColor: secondaryColor,
           ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
+        onTap: _onItemTapped,
+      ),
+      backgroundColor: primaryColor,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Top Red Container (Placeholder for any section)
+            Container(
+              padding: const EdgeInsets.only(
+                  top: 20, left: 20, right: 20, bottom: 5),
+              child: GestureDetector(
+                onTap: () => {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const AffiliatePage()),
+                  )
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Container(
+                    width: double.infinity,
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      'assets/images/refer.png',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // const SizedBox(height: 10),
+            Padding(
+              padding:
+                  EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: secondaryColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                height: 30, // Ensure the height is defined
+                child: Marquee(
+                  text:
+                      "'Welcome to FansGame! 🎮Join a vibrant community of gamers, enjoy thrilling challenges, and explore endless entertainment. Play, compete, and connect with fellow fans from around the world! 🌍🔥",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                  scrollAxis: Axis.horizontal,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                ),
+              ),
+            ),
+
+            // Additional Container for Visual Effect Section
+            Container(
+              padding: const EdgeInsets.only(
+                left: 20,
+                right: 20,
+              ),
+              // height: 50,
+              width: MediaQuery.of(context)
+                  .size
+                  .width, // Corrected way to get screen width
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Featured Hosters',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+            // const SizedBox(height: 3),
+
+            // Hoster Grid Section with Shimmer Effect while loading
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              child: FutureBuilder<List<Hoster>>(
+                future: _futureHosters,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 0.9,
+                      ),
+                      itemCount: 9,
+                      itemBuilder: (context, index) {
+                        return Shimmer.fromColors(
+                          baseColor: secondaryColor,
+                          highlightColor: Colors.grey[300]!,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: secondaryColor,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    );
+                  }
+
+                  final hosters = snapshot.data ?? [];
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics:
+                        const NeverScrollableScrollPhysics(), // Prevent GridView from scrolling on its own
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 0.85,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    itemCount: hosters.length,
+                    itemBuilder: (context, index) {
+                      final hoster = hosters[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  playVideoPage(videoUrl: hoster.embed),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: secondaryColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Stack(
+                                  children: [
+                                    // Network Image
+                                    Image.network(
+                                      hoster.thumbSrc,
+                                      fit: BoxFit.cover,
+                                      height: 85,
+                                      width: double.infinity,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                        return Image.asset(
+                                          'assets/images/placeholder.jpg',
+                                          fit: BoxFit.cover,
+                                          height: 85,
+                                          width: double.infinity,
+                                        );
+                                      },
+                                    ),
+                                    Positioned.fill(
+                                      child: BackdropFilter(
+                                        filter: ImageFilter.blur(
+                                            sigmaX: 5.0, sigmaY: 5.0),
+                                        child: Container(
+                                          color: Colors.black.withOpacity(0.1),
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 25),
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.remove_red_eye,
+                                          color: Colors.white,
+                                          size: 30,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  hoster.title,
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 12),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );

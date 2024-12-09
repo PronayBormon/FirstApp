@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
+import 'package:homepage_project/pages/games.dart';
+import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/user/profile.dart';
 import '../components/Sidebar.dart';
 import 'dart:convert';
 import 'package:homepage_project/helper/constant.dart';
@@ -47,6 +50,25 @@ class _SignUpState extends State<SignUp> {
   bool _hasLowercase = false;
   bool _hasSpecialCharacter = false;
   bool _isPasswordLongEnough = false;
+  int _selectedIndex = 0;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    List<Widget> pages = [
+      const Homepage(),
+      const GamesPage(),
+      const HosterListPage(),
+      const ProfilePage(),
+    ];
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => pages[index]),
+    );
+  }
 
   // Function to check password strength and roles
   void _checkPasswordStrength(String password) {
@@ -129,22 +151,42 @@ class _SignUpState extends State<SignUp> {
         elevation: 2.0,
         shadowColor: Colors.black,
         backgroundColor: secondaryColor,
-        leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset(
-              'assets/icons/chevron-left.svg',
-              color: Colors.white,
-              height: 25,
-              width: 25,
+        leading: GestureDetector(),
+      ),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(0.0),
+          topRight: Radius.circular(0.0),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.white54,
+          unselectedItemColor: Colors.white54,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+              backgroundColor: secondaryColor,
             ),
-          ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.sports_esports),
+              label: 'Games',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.play_circle),
+              label: 'Model',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+              backgroundColor: secondaryColor,
+            ),
+          ],
+          onTap: _onItemTapped,
         ),
       ),
-      drawer: const OffcanvasMenu(),
       backgroundColor: primaryColor,
       body: SingleChildScrollView(
         child: Padding(

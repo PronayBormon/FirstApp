@@ -61,7 +61,7 @@ class _OffcanvasMenuState extends State<OffcanvasMenu> {
           final isLoggedIn = snapshot.data ?? false;
 
           return ListView(
-            padding: EdgeInsets.zero,
+            // padding: EdgeInsets.zero,
             children: [
               const Padding(
                 padding: EdgeInsets.only(

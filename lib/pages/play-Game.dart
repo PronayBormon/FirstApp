@@ -134,7 +134,7 @@ class _HtmlPageState extends State<HtmlPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.gameCode, style: const TextStyle(color: mainColor)),
+        title: Text("Game", style: const TextStyle(color: mainColor)),
         centerTitle: true,
         backgroundColor: secondaryColor,
         leading: GestureDetector(
@@ -145,39 +145,46 @@ class _HtmlPageState extends State<HtmlPage> {
                 color: Colors.white, height: 25, width: 25),
           ),
         ),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset('assets/icons/menu.svg',
-                  color: Colors.white, height: 25, width: 25),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-        ],
+        // actions: [
+        //   Builder(
+        //     builder: (context) => IconButton(
+        //       icon: SvgPicture.asset('assets/icons/menu.svg',
+        //           color: Colors.white, height: 25, width: 25),
+        //       onPressed: () {
+        //         Scaffold.of(context).openDrawer();
+        //       },
+        //     ),
+        //   ),
+        // ],
       ),
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.0),
-            topRight: Radius.circular(30.0),
-          ),
-        ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
+          unselectedItemColor: Colors.white54,
           backgroundColor: Colors.transparent,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.sports_esports), label: 'Games'),
+              icon: Icon(Icons.home),
+              label: 'Home',
+              backgroundColor: secondaryColor,
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.play_circle), label: 'Betting'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+              icon: Icon(Icons.sports_esports),
+              label: 'Games',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.play_circle),
+              label: 'Betting',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+              backgroundColor: secondaryColor,
+            ),
           ],
           onTap: _onItemTapped,
         ),

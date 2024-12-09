@@ -106,21 +106,21 @@ class _NotificationPageState extends State<NotificationPage> {
             ),
           ),
         ),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-        ],
+        // actions: [
+        //   Builder(
+        //     builder: (context) => IconButton(
+        //       icon: SvgPicture.asset(
+        //         'assets/icons/menu.svg',
+        //         color: Colors.white,
+        //         height: 25,
+        //         width: 25,
+        //       ),
+        //       onPressed: () {
+        //         Scaffold.of(context).openDrawer();
+        //       },
+        //     ),
+        //   ),
+        // ],
       ),
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: ClipRRect(

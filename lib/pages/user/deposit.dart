@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:homepage_project/pages/games.dart';
+import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/user/profile.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -30,6 +34,25 @@ class _DepositPageState extends State<DepositPage>
   String? _accountNumber;
   String? _mobileNumber;
   String? _amount;
+  int _selectedIndex = 1;
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    List<Widget> pages = [
+      const Homepage(),
+      const GamesPage(),
+      const HosterListPage(),
+      const ProfilePage(),
+    ];
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => pages[index]),
+    );
+  }
 
   final List<String> currencyOptions = ['Bitcoin', 'Ethereum', 'Litecoin'];
   final List<String> networkOptions = ['ERC20', 'TRC20'];
@@ -69,16 +92,16 @@ class _DepositPageState extends State<DepositPage>
                 color: Colors.white, height: 25, width: 25),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: SvgPicture.asset('assets/icons/menu.svg',
-                color: Colors.white, height: 25, width: 25),
-            onPressed: () {
-              _scaffoldKey.currentState
-                  ?.openDrawer(); // Use GlobalKey to open the drawer
-            },
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: SvgPicture.asset('assets/icons/menu.svg',
+        //         color: Colors.white, height: 25, width: 25),
+        //     onPressed: () {
+        //       _scaffoldKey.currentState
+        //           ?.openDrawer(); // Use GlobalKey to open the drawer
+        //     },
+        //   ),
+        // ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -92,7 +115,40 @@ class _DepositPageState extends State<DepositPage>
           unselectedLabelColor: Colors.white54,
         ),
       ),
-      drawer: const OffcanvasMenu(),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(0.0),
+          topRight: Radius.circular(0.0),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          selectedItemColor: mainColor,
+          unselectedItemColor: Colors.white54,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.sports_esports),
+              label: 'Games',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.play_circle),
+              label: 'Model',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+              backgroundColor: secondaryColor,
+            ),
+          ],
+          onTap: _onItemTapped,
+        ),
+      ),
       backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
       body: TabBarView(
         controller: _tabController,

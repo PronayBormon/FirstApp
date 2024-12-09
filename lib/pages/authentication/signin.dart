@@ -6,6 +6,9 @@ import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signup.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:homepage_project/pages/games.dart';
+import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/user/profile.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -24,11 +27,30 @@ class _SignInState extends State<SignIn> {
   String? _username;
   String? _password;
   bool _obscurePassword = true;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _checkTokenAndRedirect();
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    List<Widget> pages = [
+      const Homepage(),
+      const GamesPage(),
+      const HosterListPage(),
+      const ProfilePage(),
+    ];
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => pages[index]),
+    );
   }
 
   // Toggle password visibility
@@ -128,37 +150,42 @@ class _SignInState extends State<SignIn> {
         elevation: 2.0,
         shadowColor: Colors.black,
         backgroundColor: secondaryColor,
-        leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset(
-              'assets/icons/chevron-left.svg',
-              color: Colors.white,
-              height: 25,
-              width: 25,
-            ),
-          ),
-        ),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-        ],
+        leading: GestureDetector(),
       ),
-      drawer: const OffcanvasMenu(),
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(0.0),
+          topRight: Radius.circular(0.0),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          selectedItemColor: Colors.white54,
+          unselectedItemColor: Colors.white54,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.sports_esports),
+              label: 'Games',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.play_circle),
+              label: 'Model',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+              backgroundColor: secondaryColor,
+            ),
+          ],
+          onTap: _onItemTapped,
+        ),
+      ),
       backgroundColor: primaryColor,
       body: Padding(
         padding: const EdgeInsets.all(16.0),

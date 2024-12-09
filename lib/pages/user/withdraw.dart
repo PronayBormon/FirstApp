@@ -7,6 +7,14 @@ import 'package:homepage_project/pages/user/profile.dart';
 import 'package:homepage_project/pages/games.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
+const primaryColor = Color.fromRGBO(35, 38, 38, 1);
+const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
+const pinkGradient = LinearGradient(
+  colors: [
+    Color.fromRGBO(228, 62, 229, 1),
+    Color.fromRGBO(229, 15, 112, 1),
+  ],
+);
 
 class WithdrawPage extends StatefulWidget {
   const WithdrawPage({super.key});
@@ -126,21 +134,21 @@ class _WithdrawPageState extends State<WithdrawPage> {
             ),
           ),
         ),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-        ],
+        // actions: [
+        //   Builder(
+        //     builder: (context) => IconButton(
+        //       icon: SvgPicture.asset(
+        //         'assets/icons/menu.svg',
+        //         color: Colors.white,
+        //         height: 25,
+        //         width: 25,
+        //       ),
+        //       onPressed: () {
+        //         Scaffold.of(context).openDrawer();
+        //       },
+        //     ),
+        //   ),
+        // ],
       ),
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: ClipRRect(
@@ -151,23 +159,27 @@ class _WithdrawPageState extends State<WithdrawPage> {
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
+          unselectedItemColor: Colors.white54,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: 'Home',
+              backgroundColor: secondaryColor,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.sports_esports),
               label: 'Games',
+              backgroundColor: secondaryColor,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.play_circle),
               label: 'Model',
+              backgroundColor: secondaryColor,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
               label: 'Profile',
+              backgroundColor: secondaryColor,
             ),
           ],
           onTap: _onItemTapped,

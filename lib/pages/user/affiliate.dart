@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:homepage_project/pages/user/profile.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -29,8 +30,11 @@ class AffiliatePage extends StatelessWidget {
         centerTitle: true,
         backgroundColor: secondaryColor,
         leading: GestureDetector(
-          onTap: () {
-            Navigator.pop(context);
+          onTap: () => {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
+            )
           },
           child: Padding(
             padding: const EdgeInsets.all(8.0),

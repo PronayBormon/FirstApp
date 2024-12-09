@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/components/Sidebar.dart';
+import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:homepage_project/pages/user/wallet.dart';
@@ -55,7 +56,7 @@ class _TransectionPageState extends State<Transection>
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const WalletPage()),
+          MaterialPageRoute(builder: (context) => const GamesPage()),
         );
         break;
       case 2:
@@ -97,21 +98,21 @@ class _TransectionPageState extends State<Transection>
             ),
           ),
         ),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-        ],
+        // actions: [
+        //   Builder(
+        //     builder: (context) => IconButton(
+        //       icon: SvgPicture.asset(
+        //         'assets/icons/menu.svg',
+        //         color: Colors.white,
+        //         height: 25,
+        //         width: 25,
+        //       ),
+        //       onPressed: () {
+        //         Scaffold.of(context).openDrawer();
+        //       },
+        //     ),
+        //   ),
+        // ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
@@ -134,23 +135,27 @@ class _TransectionPageState extends State<Transection>
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
+          unselectedItemColor: Colors.white54,
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
               label: 'Home',
+              backgroundColor: secondaryColor,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.sports_esports),
               label: 'Games',
+              backgroundColor: secondaryColor,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.play_circle),
               label: 'Model',
+              backgroundColor: secondaryColor,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
               label: 'Profile',
+              backgroundColor: secondaryColor,
             ),
           ],
           onTap: _onItemTapped,

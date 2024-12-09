@@ -61,25 +61,6 @@ class _playVideoPageState extends State<playVideoPage> {
     }
   }
 
-  // Future<Game> fetchVideo(String videoUrl) async {
-  //   print("++++++++++++++++++++++================+++++++++++ {$videoUrl}");
-  //   try {
-  //     final response = await http.get(
-  //       Uri.parse(
-  //           'https://api.totomonkey.com/api/public/getVideoDetails?url=$videoUrl'),
-  //     );
-
-  //     if (response.statusCode == 200) {
-  //       final jsonData = json.decode(response.body);
-  //       return Game.fromJson(jsonData['data']);
-  //     } else {
-  //       throw Exception('Failed to fetch video data');
-  //     }
-  //   } catch (e) {
-  //     throw Exception('Error fetching video: $e');
-  //   }
-  // }
-
   void _onItemTapped(int index) {
     final pages = [
       const Homepage(),
@@ -150,25 +131,32 @@ class _playVideoPageState extends State<playVideoPage> {
       ),
       drawer: const OffcanvasMenu(),
       bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: Colors.red,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.0),
-            topRight: Radius.circular(30.0),
-          ),
-        ),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
+          unselectedItemColor: Colors.white54,
           backgroundColor: Colors.transparent,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.sports_esports), label: 'Games'),
+              icon: Icon(Icons.home),
+              label: 'Home',
+              backgroundColor: secondaryColor,
+            ),
             BottomNavigationBarItem(
-                icon: Icon(Icons.play_circle), label: 'Betting'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+              icon: Icon(Icons.sports_esports),
+              label: 'Games',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.play_circle),
+              label: 'Betting',
+              backgroundColor: secondaryColor,
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+              backgroundColor: secondaryColor,
+            ),
           ],
           onTap: _onItemTapped,
         ),

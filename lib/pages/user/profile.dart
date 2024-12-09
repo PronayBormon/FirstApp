@@ -33,6 +33,17 @@ const pinkGradient = LinearGradient(
 );
 const _secureStorage = FlutterSecureStorage();
 
+Future<void> logout(BuildContext context) async {
+  // Clear session data from secure storage
+  await _secureStorage.deleteAll();
+
+  // After logging out, navigate to the SignIn page
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => const SignIn()),
+  );
+}
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -43,11 +54,21 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 3;
 
+  bool _isLoggedIn = false; // Simple boolean state
+
   @override
   void initState() {
     super.initState();
-    // _futureGame = fetchVideo(widget.videoUrl);
-    // _checkTokenAndRedirect();
+    _checkLoginStatus();
+    _checkTokenAndRedirect();
+  }
+
+  // Check if the token exists and update state
+  Future<void> _checkLoginStatus() async {
+    final token = await _secureStorage.read(key: 'access_token');
+    setState(() {
+      _isLoggedIn = token != null;
+    });
   }
 
   void _checkTokenAndRedirect() async {
@@ -86,38 +107,105 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile', style: TextStyle(color: mainColor)),
         centerTitle: true,
         backgroundColor: secondaryColor,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset(
-              'assets/icons/chevron-left.svg',
-              color: Colors.white,
-              height: 25,
-              width: 25,
+        toolbarHeight: 80,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 0), // Adjust padding for logo
+          child: Container(
+            margin: EdgeInsets.only(left: 15),
+            child: Image.asset(
+              'assets/images/logo-Old.png', // Replace with your logo path
+              // fit: BoxFit.contain,
+              // height: 200, // Larger logo size
+              // width: 80,
             ),
           ),
         ),
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
+          _isLoggedIn
+              ? Padding(
+                  padding: const EdgeInsets.all(15),
+                  child: Row(
+                    children: [
+                      const Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "Balance:",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            "\$00.00",
+                            style: TextStyle(
+                              color: Colors.greenAccent,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 15),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const ProfilePage()),
+                          );
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.all(2.0),
+                          child: CircleAvatar(
+                            backgroundImage:
+                                AssetImage('assets/images/Avatar_image.png'),
+                            radius: 18,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: mainColor,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(5),
+                          child: GestureDetector(
+                            onTap: () => {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SignIn(),
+                                  ))
+                            },
+                            child: Text(
+                              "Login",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
+                ),
         ],
       ),
-      drawer: const OffcanvasMenu(),
       bottomNavigationBar: ClipRRect(
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(0.0),
@@ -126,14 +214,18 @@ class _ProfilePageState extends State<ProfilePage> {
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
+          unselectedItemColor: Colors.white54,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(
                 icon: Icon(Icons.sports_esports), label: 'Games'),
             BottomNavigationBarItem(
                 icon: Icon(Icons.play_circle), label: 'Model'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+              backgroundColor: secondaryColor,
+            ),
           ],
           onTap: _onItemTapped,
         ),
@@ -213,9 +305,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 _gridItem(context, Icons.account_balance_wallet, 'Wallet',
                     const WalletPage()),
                 _gridItem(
-                    context, Icons.upload, 'Deposit', const DepositPage()),
+                    context, Icons.download, 'Deposit', const DepositPage()),
                 _gridItem(
-                    context, Icons.download, 'Withdraw', const WithdrawPage()),
+                    context, Icons.upload, 'Withdraw', const WithdrawPage()),
                 _gridItem(context, Icons.star, 'Bonus', const Homepage()),
                 _gridItem(context, Icons.history, 'Transactions',
                     const Transection()),
@@ -278,6 +370,31 @@ class _ProfilePageState extends State<ProfilePage> {
                 _gridItem(context, Icons.notifications, 'Notifications',
                     const NotificationPage()),
                 _gridItem(context, Icons.info, 'About', const AboutPage()),
+                InkWell(
+                  onTap: () => logout(context), // Implemented logout function
+                  child: Container(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return pinkGradient.createShader(bounds);
+                          },
+                          child: const Icon(Icons.logout,
+                              size: 25, color: Colors.white),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text('Logout',
+                            textAlign:
+                                TextAlign.center, // Align text to the center
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            )),
+                      ],
+                    ),
+                  ),
+                ), // Call logout method
               ],
             ),
 
