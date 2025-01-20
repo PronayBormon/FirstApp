@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/HomePage.dart';
-import 'package:homepage_project/pages/components/Sidebar.dart';
+import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/deposit.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:homepage_project/pages/user/transections.dart';
@@ -43,33 +44,17 @@ class _NotificationPageState extends State<NotificationPage> {
       _selectedIndex = index;
     });
 
-    // Handle navigation logic
-    switch (index) {
-      case 0:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const Homepage()),
-        );
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const WalletPage()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HosterListPage()),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfilePage()),
-        );
-        break;
-    }
+    List<Widget> pages = [
+      const reelsPage(),
+      const GamesPage(),
+      const WalletPage(),
+      const ProfilePage(),
+    ];
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => pages[index]),
+    );
   }
 
   void _showNotificationDetails(
@@ -122,36 +107,34 @@ class _NotificationPageState extends State<NotificationPage> {
         //   ),
         // ],
       ),
-      drawer: const OffcanvasMenu(),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(0.0),
-          topRight: Radius.circular(0.0),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.sports_esports),
-              label: 'Games',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle),
-              label: 'Model',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-          ],
-          onTap: _onItemTapped,
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
+        unselectedItemColor: Colors.white54,
+        backgroundColor: Colors.transparent,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle),
+            label: 'Reels',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_esports),
+            label: 'Games',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.wallet),
+            label: 'Wallet',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+            backgroundColor: secondaryColor,
+          ),
+        ],
+        onTap: _onItemTapped,
       ),
       backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
       body: SingleChildScrollView(

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/HomePage.dart';
+import 'package:homepage_project/pages/games.dart';
+import 'package:homepage_project/pages/reels.dart';
+import 'package:homepage_project/pages/user/profile.dart';
 import 'package:homepage_project/pages/user/security/change-password.dart';
 import 'package:homepage_project/pages/user/security/login-activitiy.dart';
 import 'package:homepage_project/pages/user/security/privacy-setings.dart';
@@ -34,24 +37,17 @@ class _SecurityPageState extends State<SecurityPage> {
       _selectedIndex = index;
     });
 
-    // Handle navigation logic
-    switch (index) {
-      case 0:
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => const Homepage()));
-        break;
-      case 1:
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => const WalletPage()));
-        break;
-      case 2:
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => const HosterListPage()));
-        break;
-      case 3:
-        // Stay on the security page
-        break;
-    }
+    List<Widget> pages = [
+      const reelsPage(),
+      const GamesPage(),
+      const WalletPage(),
+      const ProfilePage(),
+    ];
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => pages[index]),
+    );
   }
 
   @override
@@ -73,22 +69,34 @@ class _SecurityPageState extends State<SecurityPage> {
           ),
         ),
       ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(0.0), topRight: Radius.circular(0.0)),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: mainColor,
-          unselectedItemColor: Colors.black54,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.wallet), label: 'Wallet'),
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Hosters'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.security), label: 'Security'),
-          ],
-          onTap: _onItemTapped,
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
+        unselectedItemColor: Colors.white54,
+        backgroundColor: Colors.transparent,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle),
+            label: 'Reels',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_esports),
+            label: 'Games',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.wallet),
+            label: 'Wallet',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+            backgroundColor: secondaryColor,
+          ),
+        ],
+        onTap: _onItemTapped,
       ),
       backgroundColor: primaryColor,
       body: Padding(

@@ -25,6 +25,7 @@ dependencies:
   flutter_html: ^3.0.0-beta.2
   flutter_inappwebview: ^6.1.5
   marquee: ^2.3.0
+  # video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:
@@ -42,6 +43,8 @@ flutter:
     - assets/images/category/
     - assets/icons/
     - assets/categories.json
+    - assets/images/logo_game.png
+    - assets/images/reels.png
     # Example asset placeholders:
     # - assets/images/icon-logo.png
     # - images/a_dot_ham.jpeg

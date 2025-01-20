@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:homepage_project/helper/constant.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
-import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/game_list.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/play-Game.dart';
+import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/affiliate.dart';
 import 'package:homepage_project/pages/user/deposit.dart';
 import 'package:homepage_project/pages/user/profile.dart';
@@ -84,9 +84,9 @@ class _HomepageState extends State<Homepage> {
 
   void _onItemTapped(int index) {
     List<Widget> pages = [
-      const Homepage(),
+      const reelsPage(),
       const GamesPage(),
-      const HosterListPage(),
+      const WalletPage(),
       const ProfilePage(),
     ];
 
@@ -206,8 +206,8 @@ class _HomepageState extends State<Homepage> {
         backgroundColor: Colors.transparent,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.play_circle),
+            label: 'Reels',
             backgroundColor: secondaryColor,
           ),
           BottomNavigationBarItem(
@@ -216,8 +216,8 @@ class _HomepageState extends State<Homepage> {
             backgroundColor: secondaryColor,
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.play_circle),
-            label: 'Betting',
+            icon: Icon(Icons.wallet),
+            label: 'Wallet',
             backgroundColor: secondaryColor,
           ),
           BottomNavigationBarItem(

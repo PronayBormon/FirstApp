@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/profile.dart';
+import 'package:homepage_project/pages/user/wallet.dart';
 import 'dart:convert'; // For JSON handling
 import 'package:http/http.dart' as http; // For HTTP requests
 import 'package:flutter_svg/flutter_svg.dart';
@@ -74,9 +76,9 @@ class _GameListPageState extends State<GameListPage> {
 
   void _onItemTapped(int index) {
     List<Widget> pages = [
-      const Homepage(),
+      const reelsPage(),
       const GamesPage(),
-      const HosterListPage(),
+      const WalletPage(),
       const ProfilePage(),
     ];
 
@@ -104,15 +106,30 @@ class _GameListPageState extends State<GameListPage> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: mainColor,
-        unselectedItemColor: Colors.black54,
+        selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
+        unselectedItemColor: Colors.white54,
+        backgroundColor: Colors.transparent,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.sports_esports), label: 'Games'),
+            icon: Icon(Icons.play_circle),
+            label: 'Reels',
+            backgroundColor: secondaryColor,
+          ),
           BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle), label: 'Betting'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            icon: Icon(Icons.sports_esports),
+            label: 'Games',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.wallet),
+            label: 'Wallet',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+            backgroundColor: secondaryColor,
+          ),
         ],
         onTap: _onItemTapped,
       ),

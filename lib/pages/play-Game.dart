@@ -5,12 +5,13 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:homepage_project/methods/gameApi.dart'; // Adjusted class name
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
-import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:homepage_project/pages/user/wallet.dart';
 
 // Define colors
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
@@ -32,9 +33,10 @@ class Game {
 }
 
 class HtmlPage extends StatefulWidget {
-  final String gameCode;
+  final String platType;
+  final String gameType;
 
-  const HtmlPage({super.key, required this.gameCode});
+  const HtmlPage({super.key, required this.platType, required this.gameType});
 
   @override
   _HtmlPageState createState() => _HtmlPageState();
@@ -50,7 +52,10 @@ class _HtmlPageState extends State<HtmlPage> {
   @override
   void initState() {
     super.initState();
-    _futureGame = fetchGame(widget.gameCode); // This now returns Future<Game>
+    _futureGame = fetchGame(
+        widget.platType,
+        widget
+            .gameType); // This should call the fetchGame method with parameters
     _checkTokenAndRedirect();
   }
 
@@ -58,9 +63,6 @@ class _HtmlPageState extends State<HtmlPage> {
   void _checkTokenAndRedirect() async {
     final token = await _secureStorage.read(key: 'access_token');
     final userdata = await _secureStorage.read(key: 'userdata');
-
-    print('Token: $token'); // Debug log
-    // print('UserData: $userdata'); // Debug log
 
     if (token == null) {
       Navigator.pushReplacement(
@@ -71,19 +73,15 @@ class _HtmlPageState extends State<HtmlPage> {
   }
 
   // This now returns a Future<Game>
-  Future<Game> fetchGame(String gameCode) async {
-    final data = {'slug': gameCode};
+  Future<Game> fetchGame(String platType, String gameType) async {
+    final data = {'platType': platType, 'gameType': gameType};
     try {
       final result = await GameApiService()
-          .postRequestData(route: "/games/requesttoGame", data: data);
+          .postRequestData(route: "/games/platformTypeGames", data: data);
 
       final response = jsonDecode(result.body);
       final url = response["url"];
 
-      print(
-          '==============================================================================Server Response: $url');
-
-      // If URL is found, return the Game object
       if (url != null) {
         return Game(url: url); // Return the Game object
       } else {
@@ -91,18 +89,18 @@ class _HtmlPageState extends State<HtmlPage> {
       }
     } catch (e) {
       print("Error fetching game: $e");
-      // Handle any errors (you can show a dialog or message here)
       throw Exception("Error fetching game: $e");
     }
   }
 
   void _onItemTapped(int index) {
-    final pages = [
-      const Homepage(),
+    List<Widget> pages = [
+      const reelsPage(),
       const GamesPage(),
-      const HosterListPage(),
+      const WalletPage(),
       const ProfilePage(),
     ];
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => pages[index]),
@@ -122,7 +120,24 @@ class _HtmlPageState extends State<HtmlPage> {
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: const Text("OK"),
+              child: Row(
+                children: [
+                  Text("OK"),
+                  SizedBox(
+                    width: 20,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const GamesPage()),
+                      );
+                    },
+                    child: Text('Back'),
+                  )
+                ],
+              ),
             ),
           ],
         );
@@ -145,69 +160,61 @@ class _HtmlPageState extends State<HtmlPage> {
                 color: Colors.white, height: 25, width: 25),
           ),
         ),
-        // actions: [
-        //   Builder(
-        //     builder: (context) => IconButton(
-        //       icon: SvgPicture.asset('assets/icons/menu.svg',
-        //           color: Colors.white, height: 25, width: 25),
-        //       onPressed: () {
-        //         Scaffold.of(context).openDrawer();
-        //       },
-        //     ),
-        //   ),
-        // ],
       ),
-      drawer: const OffcanvasMenu(),
-      bottomNavigationBar: Container(
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: mainColor,
-          unselectedItemColor: Colors.white54,
-          backgroundColor: Colors.transparent,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-              backgroundColor: secondaryColor,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.sports_esports),
-              label: 'Games',
-              backgroundColor: secondaryColor,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle),
-              label: 'Betting',
-              backgroundColor: secondaryColor,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-              backgroundColor: secondaryColor,
-            ),
-          ],
-          onTap: _onItemTapped,
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
+        unselectedItemColor: Colors.white54,
+        backgroundColor: Colors.transparent,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle),
+            label: 'Reels',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_esports),
+            label: 'Games',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.wallet),
+            label: 'Wallet',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+            backgroundColor: secondaryColor,
+          ),
+        ],
+        onTap: _onItemTapped,
       ),
       backgroundColor: primaryColor,
       body: FutureBuilder<Game>(
         future: _futureGame, // Use the future that returns Game
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: Image.asset('assets/images/logo_game.png'),
+            );
           } else if (snapshot.hasError) {
             // Show error dialog on error
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              _showErrorDialog('Error: ${snapshot.error}');
+              _showErrorDialog('Error: Platform Error, ${snapshot.error}');
             });
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: Image.asset('assets/images/logo_game.png'),
+            );
           } else if (snapshot.hasData) {
-            // When the data is fetched successfully, display the web view
-            gameUrl = snapshot.data?.url; // Get the URL from the fetched data
+            gameUrl = snapshot.data?.url;
+
+            // Convert String to WebUri here
+            WebUri webUri = WebUri(gameUrl!);
 
             return InAppWebView(
               initialUrlRequest: URLRequest(
-                url: WebUri(gameUrl!),
+                url: webUri, // Use WebUri instead of Uri
               ),
               onWebViewCreated: (InAppWebViewController controller) {
                 _webViewController = controller;

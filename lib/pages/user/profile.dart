@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
-import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/about.dart';
 import 'package:homepage_project/pages/user/affiliate.dart';
 import 'package:homepage_project/pages/user/deposit.dart';
@@ -88,9 +88,9 @@ class _ProfilePageState extends State<ProfilePage> {
     });
 
     List<Widget> pages = [
-      const Homepage(),
+      const reelsPage(),
       const GamesPage(),
-      const HosterListPage(),
+      const WalletPage(),
       const ProfilePage(),
     ];
 
@@ -206,29 +206,34 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
         ],
       ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(0.0),
-          topRight: Radius.circular(0.0),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: mainColor,
-          unselectedItemColor: Colors.white54,
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.sports_esports), label: 'Games'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.play_circle), label: 'Model'),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-              backgroundColor: secondaryColor,
-            ),
-          ],
-          onTap: _onItemTapped,
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
+        unselectedItemColor: Colors.white54,
+        backgroundColor: Colors.transparent,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle),
+            label: 'Reels',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_esports),
+            label: 'Games',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.wallet),
+            label: 'Wallet',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+            backgroundColor: secondaryColor,
+          ),
+        ],
+        onTap: _onItemTapped,
       ),
       backgroundColor: primaryColor,
       body: SingleChildScrollView(
@@ -308,7 +313,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     context, Icons.download, 'Deposit', const DepositPage()),
                 _gridItem(
                     context, Icons.upload, 'Withdraw', const WithdrawPage()),
-                _gridItem(context, Icons.star, 'Bonus', const Homepage()),
+                _gridItem(context, Icons.star, 'Bonus', const reelsPage()),
                 _gridItem(context, Icons.history, 'Transactions',
                     const Transection()),
               ],

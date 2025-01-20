@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:homepage_project/helper/constant.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
-import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:homepage_project/pages/game_list.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/play-Game.dart';
+import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/deposit.dart';
 import 'package:homepage_project/pages/user/personal-details.dart';
 import 'package:homepage_project/pages/user/profile.dart';
@@ -29,6 +29,27 @@ const pinkGradient = LinearGradient(
   ],
 );
 const _secureStorage = FlutterSecureStorage();
+
+class GameType {
+  final String id;
+  final String name;
+  final String imagepath; // Explicitly defining the type as String
+
+  GameType({
+    required this.id,
+    required this.name,
+    required this.imagepath,
+  });
+
+  factory GameType.fromJson(Map<String, dynamic> json) {
+    return GameType(
+      id: json['id'].toString(),
+      name: json['name'],
+      imagepath: json[
+          'imagepath'], // Assuming imagepath is a string (URL or file path)
+    );
+  }
+}
 
 class Game {
   final int id;
@@ -61,16 +82,51 @@ class GamesPage extends StatefulWidget {
 }
 
 class _GamesPageState extends State<GamesPage> {
-  late Future<List<Game>> _futureGames;
   final int _selectedIndex = 1;
-  String _selectedFilter = "All";
+  late Future<List<Game>> _futureGames;
+  late Future<List<GameType>> _futureGameTypes;
+  String _selectedFilter = "4"; // Default game type ID
   bool _isLoggedIn = false; // Simple boolean state
 
   @override
   void initState() {
     super.initState();
-    _futureGames = fetchAllGames();
+    _futureGameTypes = fetchGameTypes();
+    _futureGames = fetchGamesByType(_selectedFilter);
     _checkLoginStatus();
+  }
+
+  Future<List<GameType>> fetchGameTypes() async {
+    final response = await http.get(
+      Uri.parse('https://api.totomonkey.com/api/public/allGamesType'),
+    );
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      if (jsonResponse['success']) {
+        var data = jsonResponse['data'];
+        if (data is List) {
+          return data.map((json) => GameType.fromJson(json)).toList();
+        }
+      }
+    }
+    throw Exception('Failed to load game types');
+  }
+
+  Future<List<Game>> fetchGamesByType(String gameTypeId) async {
+    final response = await http.get(
+      Uri.parse(
+          'https://api.totomonkey.com/api/public/gameTypeWisePlatformList?game_type_id=$gameTypeId'),
+    );
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      if (jsonResponse['success']) {
+        var data = jsonResponse['data'];
+        if (data is List) {
+          return data.map((json) => Game.fromJson(json)).toList();
+        }
+      }
+    }
+    throw Exception('Failed to load games');
   }
 
   // Check if the token exists and update state
@@ -83,9 +139,9 @@ class _GamesPageState extends State<GamesPage> {
 
   void _onItemTapped(int index) {
     List<Widget> pages = [
-      const Homepage(),
+      const reelsPage(),
       const GamesPage(),
-      const HosterListPage(),
+      const WalletPage(),
       const ProfilePage(),
     ];
 
@@ -95,56 +151,13 @@ class _GamesPageState extends State<GamesPage> {
     );
   }
 
-  Future<List<Game>> fetchAllGames() async {
-    final response = await http.get(
-      Uri.parse('https://api.totomonkey.com/api/public/getPublicAllGames'),
-    );
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      if (jsonResponse['success']) {
-        var data = jsonResponse['data'];
-        if (data is List) {
-          return data.map((json) => Game.fromJson(json)).toList();
-        } else {
-          throw Exception(
-              'Expected data to be a list but got ${data.runtimeType}');
-        }
-      } else {
-        throw Exception('Failed to fetch games: ${jsonResponse['message']}');
-      }
-    } else {
-      throw Exception('Failed to load games: ${response.statusCode}');
-    }
-  }
-
-  Future<List<Game>> fetchFilteredGames(String filter) async {
-    final response = await http.get(
-      Uri.parse(
-          'https://api.totomonkey.com/api/public/gameTypeWiseCategory/$filter'),
-    );
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      if (jsonResponse['success']) {
-        var data = jsonResponse['data'];
-        if (data is List) {
-          return data.map((json) => Game.fromJson(json)).toList();
-        } else {
-          throw Exception(
-              'Expected data to be a list but got ${data.runtimeType}');
-        }
-      } else {
-        throw Exception('Failed to fetch games: ${jsonResponse['message']}');
-      }
-    } else {
-      throw Exception('Failed to load games: ${response.statusCode}');
-    }
-  }
-
   void _onGameTapped(Game game) {
+    // print("${game.slug}, $_selectedFilter");
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => HtmlPage(gameCode: game.slug),
+        builder: (context) =>
+            HtmlPage(platType: game.slug, gameType: _selectedFilter),
       ),
     );
   }
@@ -252,33 +265,38 @@ class _GamesPageState extends State<GamesPage> {
                 ),
         ],
       ),
-      bottomNavigationBar: Container(
-        child: Container(
-          color: Colors.blue,
-          child: BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            selectedItemColor: mainColor,
-            unselectedItemColor: Colors.white54,
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.sports_esports),
-                label: 'Games',
-                backgroundColor: secondaryColor,
-              ),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.play_circle), label: 'Betting'),
-              BottomNavigationBarItem(
-                  icon: Icon(Icons.person), label: 'Profile'),
-            ],
-            onTap: _onItemTapped,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
+        unselectedItemColor: Colors.white54,
+        backgroundColor: Colors.transparent,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle),
+            label: 'Reels',
+            backgroundColor: secondaryColor,
           ),
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_esports),
+            label: 'Games',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.wallet),
+            label: 'Wallet',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+            backgroundColor: secondaryColor,
+          ),
+        ],
+        onTap: _onItemTapped,
       ),
       backgroundColor: primaryColor,
       body: CustomScrollView(
         slivers: [
-          // Options Grid for Balance
           SliverPadding(
             padding: const EdgeInsets.all(20),
             sliver: SliverGrid(
@@ -444,16 +462,97 @@ class _GamesPageState extends State<GamesPage> {
               ),
             ),
           ),
-
-          SliverPersistentHeader(
-            pinned: true,
-            floating: false,
-            delegate: _StickyHeaderDelegate(
-              onFilterSelected: (filter) {
-                setState(() {
-                  _selectedFilter = filter;
-                  _futureGames = fetchFilteredGames(_selectedFilter);
-                });
+          SliverPadding(
+            padding: EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 0),
+            sliver: SliverToBoxAdapter(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: secondaryColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                height: 30, // Ensure the height is defined
+                child: Marquee(
+                  text:
+                      "'Welcome to FansGame! 🎮Join a vibrant community of gamers, enjoy thrilling challenges, and explore endless entertainment. Play, compete, and connect with fellow fans from around the world! 🌍🔥",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                  scrollAxis: Axis.horizontal,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                ),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.all(20),
+            sliver: FutureBuilder<List<GameType>>(
+              future: _futureGameTypes,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      childAspectRatio: 1,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Container(
+                        padding: EdgeInsets.all(5),
+                        child: Center(
+                          child: Shimmer.fromColors(
+                            baseColor: secondaryColor,
+                            highlightColor:
+                                const Color.fromARGB(255, 94, 93, 93),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: secondaryColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      childCount: 4,
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return SliverFillRemaining(
+                    child: Center(
+                      child: Text('Error: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red)),
+                    ),
+                  );
+                } else if (snapshot.hasData) {
+                  final gameTypes = snapshot.data!;
+                  return SliverToBoxAdapter(
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white10, // Set the background color here
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: List.generate(
+                            gameTypes.length,
+                            (index) {
+                              final gameType = gameTypes[index];
+                              return _buildGameTypeItem(gameType);
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                } else {
+                  return const SliverFillRemaining(
+                    child: Center(child: Text('No game types available.')),
+                  );
+                }
               },
             ),
           ),
@@ -503,7 +602,7 @@ class _GamesPageState extends State<GamesPage> {
                 return SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    childAspectRatio: .82,
+                    childAspectRatio: .90,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
@@ -519,12 +618,18 @@ class _GamesPageState extends State<GamesPage> {
                           child: Column(
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(12.0),
-                                child: Image.network(
-                                  game.imagePath,
-                                  fit: BoxFit.cover,
-                                  height: 85,
-                                  width: double.infinity,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(12),
+                                  topRight: Radius.circular(12),
+                                ),
+                                child: Container(
+                                  color: Colors.white,
+                                  child: Image.network(
+                                    game.imagePath,
+                                    fit: BoxFit.cover,
+                                    height: 85,
+                                    width: double.infinity,
+                                  ),
                                 ),
                               ),
                               Padding(
@@ -534,7 +639,8 @@ class _GamesPageState extends State<GamesPage> {
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 12,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -551,126 +657,105 @@ class _GamesPageState extends State<GamesPage> {
               },
             ),
           ),
+          SliverPadding(
+            padding: EdgeInsets.all(10),
+          ),
         ],
       ),
     );
   }
-}
 
-class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final Function(String) onFilterSelected;
-
-  _StickyHeaderDelegate({required this.onFilterSelected});
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: primaryColor,
-      child: Padding(
-        padding:
-            const EdgeInsets.only(left: 20, top: 10, right: 20, bottom: 15),
-        child: Container(
-          height: 140,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: secondaryColor,
-          ),
-          // color: Colors.red,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildHeaderButton(context, 'pg', 'assets/images/pg.png'),
-                _buildHeaderButton(context, 'jili', 'assets/images/jili.png'),
-                _buildHeaderButton(context, 'pp_max', 'assets/images/pp.jpeg'),
-                _buildHeaderButton(
-                    context, 'omg_man', 'assets/images/placeholder.jpg'),
-                _buildHeaderButton(
-                    context, 'mini_game', 'assets/images/placeholder.jpg'),
-                _buildHeaderButton(
-                    context, 'omg_crypto', 'assets/images/placeholder.jpg'),
-                _buildHeaderButton(
-                    context, 'hacksaw', 'assets/images/placeholder.jpg'),
-                _buildHeaderButton(context, 'pp', 'assets/images/pp.jpeg'),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderButton(
-      BuildContext context, String filter, String assetPath) {
-    return GestureDetector(
-      onTap: () => onFilterSelected(filter),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        height: 100,
-        width: 80,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
-        child: Column(
-          children: [
-            ClipOval(
-              child: Container(
-                color: secondaryColor,
-                child: Image.asset(
-                  assetPath,
-                  height: 40,
-                  width: 40,
-                  fit: BoxFit.contain,
+  Widget _buildGameTypeList(List<GameType> gameTypes) {
+    return SizedBox(
+      height: 60,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: gameTypes.length,
+        itemBuilder: (context, index) {
+          final gameType = gameTypes[index];
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _selectedFilter = gameType.id;
+                _futureGames = fetchGamesByType(_selectedFilter);
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              margin: const EdgeInsets.symmetric(
+                horizontal: 4,
+              ),
+              decoration: BoxDecoration(
+                gradient: _selectedFilter == gameType.id ? pinkGradient : null,
+                borderRadius: BorderRadius.circular(16),
+                color: _selectedFilter == gameType.id
+                    ? null
+                    : Colors.grey.shade800,
+              ),
+              child: Center(
+                child: Text(
+                  gameType.name,
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ),
-            Text(
-              filter.toUpperCase(),
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.white,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  @override
-  double get maxExtent => 120;
-
-  @override
-  double get minExtent => 120;
-
-  @override
-  bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) => true;
-
-  Widget _gridItem(
-      BuildContext context, IconData icon, String title, Widget page) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-      },
-      child: Container(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ShaderMask(
-              shaderCallback: (Rect bounds) {
-                return pinkGradient.createShader(bounds);
-              },
-              child: Icon(icon, size: 25, color: Colors.white),
-            ),
-            const SizedBox(height: 5),
-            Text(title,
-                textAlign: TextAlign.center, // Align text to the center
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                )),
-          ],
+  Widget _buildGameTypeItem(GameType gameType) {
+    return Container(
+      margin: EdgeInsets.only(right: 10),
+      decoration: BoxDecoration(
+        color: Colors.white12,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(10),
+        child: GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedFilter = gameType.id;
+              _futureGames = fetchGamesByType(_selectedFilter);
+            });
+          },
+          child: Column(
+            children: [
+              Container(
+                width: 80,
+                child: Container(
+                  padding: EdgeInsets.only(left: 15, right: 15),
+                  width: 50, // Set a fixed width for the image
+                  height: 50, // Set a fixed height for the image
+                  child: ClipOval(
+                    child: Container(
+                      height: 30,
+                      width: 30,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(50),
+                      ),
+                      child: Image.network(
+                        gameType.imagepath,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Text(
+                gameType.name,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12),
+              ),
+            ],
+          ),
         ),
       ),
     );

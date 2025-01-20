@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
-import 'package:homepage_project/pages/components/Sidebar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
@@ -129,7 +128,6 @@ class _playVideoPageState extends State<playVideoPage> {
           ),
         ],
       ),
-      drawer: const OffcanvasMenu(),
       bottomNavigationBar: Container(
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,

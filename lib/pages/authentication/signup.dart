@@ -3,12 +3,13 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/profile.dart';
-import '../components/Sidebar.dart';
 import 'dart:convert';
 import 'package:homepage_project/helper/constant.dart';
 import 'package:homepage_project/methods/api.dart';
 import 'package:homepage_project/pages/HomePage.dart';
+import 'package:homepage_project/pages/user/wallet.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -58,9 +59,9 @@ class _SignUpState extends State<SignUp> {
     });
 
     List<Widget> pages = [
-      const Homepage(),
+      const reelsPage(),
       const GamesPage(),
-      const HosterListPage(),
+      const WalletPage(),
       const ProfilePage(),
     ];
 
@@ -153,39 +154,34 @@ class _SignUpState extends State<SignUp> {
         backgroundColor: secondaryColor,
         leading: GestureDetector(),
       ),
-      bottomNavigationBar: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(0.0),
-          topRight: Radius.circular(0.0),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          selectedItemColor: Colors.white54,
-          unselectedItemColor: Colors.white54,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-              backgroundColor: secondaryColor,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.sports_esports),
-              label: 'Games',
-              backgroundColor: secondaryColor,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle),
-              label: 'Model',
-              backgroundColor: secondaryColor,
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-              backgroundColor: secondaryColor,
-            ),
-          ],
-          onTap: _onItemTapped,
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
+        unselectedItemColor: Colors.white54,
+        backgroundColor: Colors.transparent,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle),
+            label: 'Reels',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.sports_esports),
+            label: 'Games',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.wallet),
+            label: 'Wallet',
+            backgroundColor: secondaryColor,
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+            backgroundColor: secondaryColor,
+          ),
+        ],
+        onTap: _onItemTapped,
       ),
       backgroundColor: primaryColor,
       body: SingleChildScrollView(
