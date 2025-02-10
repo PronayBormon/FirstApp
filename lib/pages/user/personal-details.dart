@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:homepage_project/pages/HomePage.dart';
-import 'package:homepage_project/pages/games.dart';
-import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:homepage_project/pages/reels.dart';
+import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:homepage_project/pages/user/wallet.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
 const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
 const pinkGradient = LinearGradient(
-  colors: [Color.fromRGBO(228, 62, 229, 1), Color.fromRGBO(229, 15, 112, 1)],
+  colors: [
+    Color.fromRGBO(228, 62, 229, 1),
+    Color.fromRGBO(229, 15, 112, 1),
+  ],
 );
+
+const _secureStorage = FlutterSecureStorage();
 
 class PersonalDetails extends StatefulWidget {
   const PersonalDetails({super.key});
@@ -23,16 +29,70 @@ class PersonalDetails extends StatefulWidget {
 
 class _PersonalDetailsState extends State<PersonalDetails> {
   int _selectedIndex = 3;
+  bool _isLoggedIn = false;
+  String? _userName;
+  String? _name;
+  String? _email;
+  String? _phone;
+  String? _gender;
+  String? _dob;
+  String? _nationality;
+  String? _whtsapp;
 
-  // Sample user data
-  final String userId = "123456";
-  final String username = "johndoe";
-  final String fullName = "John Doe";
-  final String email = "johndoe@example.com";
-  final String phone = "+1 234 567 890";
-  final String gender = "Male";
-  final String dob = "1990-01-01";
-  final String nationality = "American";
+  @override
+  void initState() {
+    super.initState();
+    _personalDetails_list();
+  }
+
+  Future<void> _personalDetails_list() async {
+    final url =
+        Uri.parse('https://api.totomonkey.com/api/user/getRefferalCode');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      // body: jsonEncode({'tokens': token}),
+    );
+
+    try {
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final user = responseData['user'];
+        final username = responseData['user']['username'];
+        final name = responseData['user']['name'];
+        final email = responseData['user']['email'];
+        final phone = responseData['user']['phone_number'];
+        final dob = responseData['user']['date-of-birth'];
+        final gender = responseData['user']['gender'];
+        final nationality = responseData['user']['nationality'];
+        final whtsapp = responseData['user']['whtsapp'];
+        // final available_balance = responseData['user']['available_balance'];
+
+        print("user================================  : $user");
+        // print("Email  : $email");
+        setState(() {
+          _isLoggedIn = token != null;
+          _userName = username ?? 'N/A';
+          _name = name ?? 'N/A';
+          _email = email ?? 'N/A';
+          _phone = phone ?? 'N/A';
+          _gender = gender ?? 'N/A';
+          _dob = dob ?? 'N/A';
+          _nationality = nationality ?? 'N/A';
+          _whtsapp = whtsapp ?? 'N/A';
+        });
+      } else {
+        print('Deposit failed: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -88,13 +148,15 @@ class _PersonalDetailsState extends State<PersonalDetails> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => EditDetails(
-                    username: username,
-                    fullName: fullName,
-                    email: email,
-                    phone: phone,
-                    gender: gender,
-                    dob: dob,
-                    nationality: nationality,
+                    username: _userName ?? 'N/A',
+                    fullName:
+                        _name ?? 'N/A', // Replace if there's a fullName field
+                    email: _email ?? 'N/A',
+                    phone: _phone ?? 'N/A',
+                    gender: _gender ?? 'N/A',
+                    dob: _dob ?? 'N/A',
+                    nationality: _nationality ?? 'N/A',
+                    whatsapp: _whtsapp ?? 'N/A',
                   ),
                 ),
               );
@@ -138,23 +200,24 @@ class _PersonalDetailsState extends State<PersonalDetails> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            _infoTile('Username', username),
-            _infoTile('Full Name', fullName),
-            _infoTile('Email Address', email),
-            _infoTile('Phone', phone),
-            _infoTile('Gender', gender),
-            _infoTile('Date of Birth', dob),
-            _infoTile('Nationality', nationality),
+            _infoTile('Username', _userName),
+            _infoTile('Name', _name),
+            _infoTile('Email Address', _email),
+            _infoTile('Phone', _phone),
+            // _infoTile('Gender', _gender),
+            // _infoTile('Date of Birth', _dob),
+            // _infoTile('Nationality', _nationality),
+            _infoTile('WhatsApp', _whtsapp),
           ],
         ),
       ),
     );
   }
 
-  Widget _infoTile(String title, String value) {
-    return Card(
+  Widget _infoTile(String title, String? value) {
+    return Container(
       color: secondaryColor,
-      elevation: 4,
+      // elevation: 4,
       margin: const EdgeInsets.symmetric(vertical: 5),
       child: Padding(
         padding: const EdgeInsets.all(15.0),
@@ -163,7 +226,7 @@ class _PersonalDetailsState extends State<PersonalDetails> {
           children: [
             Text(title,
                 style: const TextStyle(color: Colors.white, fontSize: 16)),
-            Text(value,
+            Text(value ?? 'N/A',
                 style: const TextStyle(
                     color: mainColor,
                     fontSize: 16,
@@ -183,6 +246,7 @@ class EditDetails extends StatefulWidget {
   final String gender;
   final String dob;
   final String nationality;
+  final String whatsapp;
 
   const EditDetails({
     super.key,
@@ -193,6 +257,7 @@ class EditDetails extends StatefulWidget {
     required this.gender,
     required this.dob,
     required this.nationality,
+    required this.whatsapp,
   });
 
   @override
@@ -207,6 +272,7 @@ class _EditDetailsState extends State<EditDetails> {
   late TextEditingController _genderController;
   late TextEditingController _dobController;
   late TextEditingController _nationalityController;
+  late TextEditingController _whatsappController;
 
   String gender = "Male"; // Dropdown value
   String nationality = "American"; // Dropdown value
@@ -221,6 +287,7 @@ class _EditDetailsState extends State<EditDetails> {
     _genderController = TextEditingController(text: widget.gender);
     _dobController = TextEditingController(text: widget.dob);
     _nationalityController = TextEditingController(text: widget.nationality);
+    _whatsappController = TextEditingController(text: widget.whatsapp);
   }
 
   @override
@@ -232,6 +299,7 @@ class _EditDetailsState extends State<EditDetails> {
     _genderController.dispose();
     _dobController.dispose();
     _nationalityController.dispose();
+    _whatsappController.dispose();
     super.dispose();
   }
 
@@ -239,14 +307,55 @@ class _EditDetailsState extends State<EditDetails> {
   final List<String> genderOptions = ['Male', 'Female'];
   final List<String> nationalityOptions = ['American', 'Canadian', 'British'];
 
-  void _saveDetails() {
-    print(_usernameController.text);
-    print(_fullNameController.text);
-    print(_emailController.text);
-    print(_phoneController.text);
-    print(_genderController.text);
-    print(gender);
-    print(nationality);
+  Future<void> _saveDetails() async {
+    final token = await _secureStorage.read(key: 'access_token');
+    final url =
+        Uri.parse('https://api.totomonkey.com/api/auth/updateprofileUsers');
+
+    final Map<String, String> body = {
+      "username": _usernameController.text,
+      "name": _fullNameController.text,
+      "email": _emailController.text,
+      "phone": _phoneController.text,
+      // "gender": _genderController.text,
+      // "nationality": nationality,
+      "whtsapp": _whatsappController.text,
+    };
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+
+    print(response.statusCode);
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Profile updated successfully!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProfilePage(),
+          ));
+      print("Profile updated successfully: ${response.body}");
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Failed to update profile!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      print("Failed to update profile: ${response.statusCode}");
+      print(response.body);
+    }
   }
 
   @override
@@ -280,18 +389,19 @@ class _EditDetailsState extends State<EditDetails> {
             _buildTextField('Full Name', _fullNameController),
             _buildTextField('Email Address', _emailController),
             _buildTextField('Phone', _phoneController),
-            _buildTextField('Date of Birth', _dobController),
-            _buildDropdownField('Gender', gender, genderOptions, (value) {
-              setState(() {
-                gender = value!;
-              });
-            }),
-            _buildDropdownField('Nationality', nationality, nationalityOptions,
-                (value) {
-              setState(() {
-                nationality = value!;
-              });
-            }),
+            _buildTextField('Whatsapp', _whatsappController),
+            // _buildTextField('Date of Birth', _dobController),
+            // _buildDropdownField('Gender', gender, genderOptions, (value) {
+            //   setState(() {
+            //     gender = value!;
+            //   });
+            // }),
+            // _buildDropdownField('Nationality', nationality, nationalityOptions,
+            //     (value) {
+            //   setState(() {
+            //     nationality = value!;
+            //   });
+            // }),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _saveDetails,
@@ -299,7 +409,7 @@ class _EditDetailsState extends State<EditDetails> {
                 backgroundColor: mainColor, // Set the button color
               ),
               child: const Text(
-                'Save Changes',
+                'Update',
                 style: TextStyle(
                   color: Colors.white,
                 ),

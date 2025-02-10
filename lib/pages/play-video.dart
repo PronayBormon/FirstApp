@@ -6,8 +6,10 @@ import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
+import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:homepage_project/pages/user/wallet.dart';
 import 'package:http/http.dart' as http;
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
@@ -62,9 +64,9 @@ class _playVideoPageState extends State<playVideoPage> {
 
   void _onItemTapped(int index) {
     final pages = [
-      const Homepage(),
+      const reelsPage(),
       const GamesPage(),
-      const HosterListPage(),
+      const WalletPage(),
       const ProfilePage(),
     ];
     Navigator.pushReplacement(
@@ -112,21 +114,21 @@ class _playVideoPageState extends State<playVideoPage> {
             ),
           ),
         ),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/menu.svg',
-                color: Colors.white,
-                height: 25,
-                width: 25,
-              ),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
-          ),
-        ],
+        // actions: [
+        //   Builder(
+        //     builder: (context) => IconButton(
+        //       icon: SvgPicture.asset(
+        //         'assets/icons/menu.svg',
+        //         color: Colors.white,
+        //         height: 25,
+        //         width: 25,
+        //       ),
+        //       onPressed: () {
+        //         Scaffold.of(context).openDrawer();
+        //       },
+        //     ),
+        //   ),
+        // ],
       ),
       bottomNavigationBar: Container(
         child: BottomNavigationBar(
@@ -136,8 +138,8 @@ class _playVideoPageState extends State<playVideoPage> {
           backgroundColor: Colors.transparent,
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
+              icon: Icon(Icons.play_circle),
+              label: 'Reels',
               backgroundColor: secondaryColor,
             ),
             BottomNavigationBarItem(
@@ -146,8 +148,8 @@ class _playVideoPageState extends State<playVideoPage> {
               backgroundColor: secondaryColor,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.play_circle),
-              label: 'Betting',
+              icon: Icon(Icons.wallet),
+              label: 'Wallet',
               backgroundColor: secondaryColor,
             ),
             BottomNavigationBarItem(

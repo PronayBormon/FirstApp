@@ -69,6 +69,14 @@ class _HtmlPageState extends State<HtmlPage> {
         context,
         MaterialPageRoute(builder: (context) => const SignIn()),
       );
+
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Text('Please Login.'),
+      //     backgroundColor: Colors.red,
+      //     duration: Duration(seconds: 3),
+      //   ),
+      // );
     }
   }
 
@@ -81,15 +89,45 @@ class _HtmlPageState extends State<HtmlPage> {
 
       final response = jsonDecode(result.body);
       final url = response["url"];
+      final code = response["code"];
 
       if (url != null) {
         return Game(url: url); // Return the Game object
       } else {
-        throw Exception("Game URL not found in response");
+        // Handle specific error codes
+        switch (code) {
+          case 10001:
+            throw ("This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
+          case 10004:
+          case 10005:
+            throw Exception(
+                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
+          case 10006:
+            throw Exception(
+                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
+          case 10007:
+            throw Exception(
+                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
+          case 10405:
+            throw Exception(
+                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
+          case 10407:
+            throw Exception(
+                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
+          case 10408:
+            throw Exception(
+                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
+          case 10409:
+            throw Exception(
+                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
+          default:
+            throw Exception("Unknown error occurred (code: $code)");
+        }
       }
     } catch (e) {
-      print("Error fetching game: $e");
-      throw Exception("Error fetching game: $e");
+      // print("Error fetching game: $e");
+      // throw Exception("Error fetching game: $e");
+      throw "Please complete your login before Play game"; // Directly rethrowing the original error instead of wrapping it
     }
   }
 
@@ -113,8 +151,19 @@ class _HtmlPageState extends State<HtmlPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Error"),
-          content: Text(errorMessage),
+          title: const Text(
+            "Error",
+            style: TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: Text(
+            "Game is under upgrade. Please try again later.",
+            style: TextStyle(
+              color: mainColor,
+            ),
+          ),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -199,18 +248,62 @@ class _HtmlPageState extends State<HtmlPage> {
               child: Image.asset('assets/images/logo_game.png'),
             );
           } else if (snapshot.hasError) {
-            // Show error dialog on error
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              _showErrorDialog('Error: Platform Error, ${snapshot.error}');
-            });
-            return Center(
-              child: Image.asset('assets/images/logo_game.png'),
+            // Extract error message from the Exception
+            String errorMessage = snapshot.error.toString();
+            if (errorMessage.contains("Exception: ")) {
+              errorMessage = errorMessage
+                  .split("Exception: ")
+                  .last; // Get the clean message
+            }
+
+            return Builder(
+              builder: (context) {
+                // Show SnackBar after the frame is built
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(errorMessage.trim()),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                });
+
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset('assets/images/logo_game.png'),
+                      const SizedBox(height: 16),
+                      Text(
+                        errorMessage, // Show only the cleaned-up error message
+                        style: TextStyle(color: Colors.red, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => GamesPage()),
+                          );
+                        },
+                        child: const Text('Back to games'),
+                      ),
+                    ],
+                  ),
+                );
+              },
             );
           } else if (snapshot.hasData) {
-            gameUrl = snapshot.data?.url;
+            final gameUrl = snapshot.data?.url;
+            if (gameUrl == null || gameUrl.isEmpty) {
+              return const Center(child: Text('No game URL found'));
+            }
 
-            // Convert String to WebUri here
-            WebUri webUri = WebUri(gameUrl!);
+            // Convert String to WebUri safely
+            final WebUri webUri = WebUri(gameUrl);
 
             return InAppWebView(
               initialUrlRequest: URLRequest(

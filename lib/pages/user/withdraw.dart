@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/HomePage.dart';
+import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/user/wallet.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -16,6 +21,7 @@ const pinkGradient = LinearGradient(
     Color.fromRGBO(229, 15, 112, 1),
   ],
 );
+const _secureStorage = FlutterSecureStorage();
 
 class WithdrawPage extends StatefulWidget {
   const WithdrawPage({super.key});
@@ -25,51 +31,226 @@ class WithdrawPage extends StatefulWidget {
 }
 
 class _WithdrawPageState extends State<WithdrawPage> {
-  int _selectedIndex = 1; // Default to Home
-  String? selectedCurrency;
-  String? selectedNetwork;
-  String? selectedMethod;
-  final List<String> currencyOptions = [
-    'Bitcoin',
-    'Ethereum',
-    'Litecoin',
-    'BDT',
-    'USD',
-  ];
-  final List<String> networkOptions = ['ERC20', 'TRC20'];
-  final List<String> methodOptions = [
-    'Bank Account',
-    'Card',
-    'Crypto',
-    'Stripe',
-    'PayPal'
-  ];
+  int _selectedIndex = 2; // Default to Home
+  Map<String, String>? selectedPlatform;
+  Map<String, String>? selectedCurrency;
+  bool? _isLoggedIn = false;
+  String? userCurrency;
+  int? userBalance;
+  List<Map<String, String>> platformList = [];
+  List<Map<String, String>> currencyOptions = [];
 
-  // Mock data for demonstration
-  double availableAmount = 1000.0; // Example balance
-  double lockedFunds = 0.0; // Example locked funds
-  double minWithdrawal = 20.0; // Minimum withdrawal limit
+  @override
+  void initState() {
+    super.initState();
+    _getPlatformList();
+    _getCurrencyList();
+    _getbalance();
+    _checkLoginStatus();
+    _checkTokenAndRedirect();
+  }
 
-  final TextEditingController amountController = TextEditingController();
-  final TextEditingController bankBranchController = TextEditingController();
-  final TextEditingController accountNumberController = TextEditingController();
-  final TextEditingController cardNumberController = TextEditingController();
-  final TextEditingController cryptoAddressController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
+  // Check if the token exists and update state
+  Future<void> _checkLoginStatus() async {
+    final token = await _secureStorage.read(key: 'access_token');
+    setState(() {
+      _isLoggedIn = token != null;
+    });
+  }
 
-  void _onWithdraw() {
-    final double withdrawAmount = double.tryParse(amountController.text) ?? 0.0;
-    if (withdrawAmount >= minWithdrawal && withdrawAmount <= availableAmount) {
-      // Handle the withdrawal logic based on the selected method
-      print('Requesting withdrawal of \$$withdrawAmount via $selectedMethod');
-      // Show success message
+  void _checkTokenAndRedirect() async {
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignIn()),
+      );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content:
-                Text('Successfully requested withdrawal of \$$withdrawAmount')),
+          content: Text('Please Complate Your Login.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
       );
+    } else {}
+  }
+
+  Future<void> _getCurrencyList() async {
+    final url = Uri.parse('https://api.totomonkey.com/api/deposit/getCurrency');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) return;
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+        List<Map<String, String>> currencies = (responseData['data'] as List)
+            .map((item) => {
+                  'id': item['id'].toString(),
+                  'name': item['name'].toString(),
+                })
+            .toList();
+
+        setState(() {
+          currencyOptions = currencies;
+          if (currencyOptions.isNotEmpty) {
+            selectedCurrency =
+                currencyOptions.first; // Select the first currency by default
+          }
+        });
+      } else {
+        print('Failed to fetch currency list: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching currency list: $e');
+    }
+  }
+
+  Future<void> _getPlatformList() async {
+    final url = Uri.parse('https://api.totomonkey.com/api/games/gamePltfmAll');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) return;
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+        List<Map<String, String>> platforms = (responseData['data'] as List)
+            .map((item) => {
+                  'id': item['id'].toString(),
+                  'name': item['name'].toString(),
+                })
+            .toList();
+
+        setState(() {
+          platformList = platforms;
+          if (platformList.isNotEmpty) {
+            selectedPlatform =
+                platformList.first; // Select the first platform by default
+          }
+        });
+      } else {
+        print('Failed to fetch platform list: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching platform list: $e');
+    }
+  }
+
+  Future<void> _getbalance() async {
+    final url =
+        Uri.parse('https://api.totomonkey.com/api/balance/getCurrentBalance');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) return;
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final Currency = responseData['currency'];
+        final balance = responseData['data']['balance'];
+
+        setState(() {
+          userCurrency = Currency;
+          userBalance = balance;
+        });
+      } else {
+        print('Failed to fetch Balance: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Could not find Balance: $e');
+    }
+  }
+
+  // Mock data for demonstration
+  double lockedFunds = 0.0; // Example locked funds
+  double minWithdrawal = 1.0; // Minimum withdrawal limit
+  final TextEditingController amountController = TextEditingController();
+
+  Future<void> _onWithdraw() async {
+    final double withdrawAmount = double.tryParse(amountController.text) ?? 0.0;
+
+    if (withdrawAmount >= minWithdrawal && withdrawAmount <= userBalance!) {
+      final url = Uri.parse(
+          'https://api.totomonkey.com/api/withdrawal/sendWithdrawalRequest');
+      final token = await _secureStorage.read(key: 'access_token');
+
+      if (token == null) return;
+
+      final data = {
+        "amount": withdrawAmount,
+        "gamingPltform": selectedPlatform!['id'], // Use platform ID
+        "currency": selectedCurrency!['id'], // Use currency ID
+      };
+
+      try {
+        final response = await http.post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(data),
+        );
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> responseData = jsonDecode(response.body);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.green,
+              content: Text(
+                'Successfully requested withdrawal request Send',
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+          );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WalletPage(),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Failed to request withdrawal: ${response.statusCode}')),
+          );
+        }
+      } catch (e) {
+        print('Error sending withdrawal request: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error requesting withdrawal')),
+        );
+      }
     } else {
-      // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid withdrawal amount')),
       );
@@ -164,29 +345,59 @@ class _WithdrawPageState extends State<WithdrawPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Withdraw Currency',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
             const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
+            DropdownButtonFormField<Map<String, String>>(
+              value: selectedPlatform, // Default selection
+              onChanged: (value) {
+                setState(() {
+                  selectedPlatform = value;
+                });
+              },
+              items: platformList.map((platform) {
+                return DropdownMenuItem<Map<String, String>>(
+                  value: platform,
+                  child: Text(platform['name']!,
+                      style: const TextStyle(color: Colors.white)),
+                );
+              }).toList(),
+
+              decoration: const InputDecoration(
+                labelText: 'Platform List',
+                filled: true,
+                fillColor: Color.fromRGBO(41, 45, 46, 1),
+                labelStyle: TextStyle(color: Colors.white),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+              dropdownColor: const Color.fromRGBO(41, 45, 46, 1),
+            ),
+            const SizedBox(height: 30),
+            DropdownButtonFormField<Map<String, String>>(
               value: selectedCurrency,
               onChanged: (value) {
                 setState(() {
                   selectedCurrency = value;
-                  selectedNetwork = null; // Reset network when currency changes
                 });
               },
-              items: currencyOptions.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child:
-                      Text(value, style: const TextStyle(color: Colors.white)),
+              items: currencyOptions.map((currency) {
+                return DropdownMenuItem<Map<String, String>>(
+                  value: currency,
+                  child: Text(currency['name']!,
+                      style: const TextStyle(color: Colors.white)),
                 );
               }).toList(),
               decoration: const InputDecoration(
+                labelText: 'Currency List',
                 filled: true,
                 fillColor: Color.fromRGBO(41, 45, 46, 1),
+                labelStyle: TextStyle(color: Colors.white),
                 border: OutlineInputBorder(
                   borderSide: BorderSide(color: Colors.white),
                 ),
@@ -199,44 +410,8 @@ class _WithdrawPageState extends State<WithdrawPage> {
               ),
               dropdownColor: const Color.fromRGBO(41, 45, 46, 1),
             ),
-            const SizedBox(height: 20),
 
-            const Text(
-              'Withdraw Method',
-              style: TextStyle(color: Colors.white, fontSize: 18),
-            ),
-            const SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: selectedMethod,
-              onChanged: (value) {
-                setState(() {
-                  selectedMethod = value;
-                });
-              },
-              items: methodOptions.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child:
-                      Text(value, style: const TextStyle(color: Colors.white)),
-                );
-              }).toList(),
-              decoration: const InputDecoration(
-                filled: true,
-                fillColor: Color.fromRGBO(41, 45, 46, 1),
-                border: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white),
-                ),
-              ),
-              dropdownColor: const Color.fromRGBO(41, 45, 46, 1),
-            ),
-            const SizedBox(height: 20),
-
+            const SizedBox(height: 30),
             // Amount Input
             TextFormField(
               controller: amountController,
@@ -259,170 +434,23 @@ class _WithdrawPageState extends State<WithdrawPage> {
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 10),
-            Text('Min: \$$minWithdrawal',
-                style: const TextStyle(color: Colors.white)),
+            Text(
+              'Min: ${NumberFormat.simpleCurrency(name: userCurrency).format(minWithdrawal)}',
+              style: const TextStyle(color: Colors.white),
+            ),
             const SizedBox(height: 20),
-
-            // Conditional Fields Based on Method
-            if (selectedMethod == 'Bank Account') ...[
-              TextFormField(
-                controller: bankBranchController,
-                style: const TextStyle(color: Colors.white), // Text color
-                decoration: const InputDecoration(
-                  labelText: 'Bank Branch',
-                  filled: true,
-                  fillColor: Color.fromRGBO(41, 45, 46, 1),
-                  labelStyle: TextStyle(color: Colors.white),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: accountNumberController,
-                style: const TextStyle(color: Colors.white), // Text color
-                decoration: const InputDecoration(
-                  labelText: 'Account Number',
-                  filled: true,
-                  fillColor: Color.fromRGBO(41, 45, 46, 1),
-                  labelStyle: TextStyle(color: Colors.white),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-              ),
-            ] else if (selectedMethod == 'Card') ...[
-              TextFormField(
-                controller: cardNumberController,
-                style: const TextStyle(color: Colors.white), // Text color
-                decoration: const InputDecoration(
-                  labelText: 'Card Number',
-                  filled: true,
-                  fillColor: Color.fromRGBO(41, 45, 46, 1),
-                  labelStyle: TextStyle(color: Colors.white),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-              ),
-              // Additional card details (expiry, CVV) can be added here
-            ] else if (selectedMethod == 'Crypto') ...[
-              DropdownButtonFormField<String>(
-                value: selectedNetwork,
-                onChanged: (value) {
-                  setState(() {
-                    selectedNetwork = value;
-                  });
-                },
-                items: networkOptions.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value,
-                        style: const TextStyle(color: Colors.white)),
-                  );
-                }).toList(),
-                decoration: const InputDecoration(
-                  filled: true,
-                  fillColor: Color.fromRGBO(41, 45, 46, 1),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-                dropdownColor: const Color.fromRGBO(41, 45, 46, 1),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: cryptoAddressController,
-                decoration: const InputDecoration(
-                  labelText: 'Crypto Address',
-                  filled: true,
-                  fillColor: Color.fromRGBO(41, 45, 46, 1),
-                  labelStyle: TextStyle(color: Colors.white),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: accountNumberController,
-                decoration: const InputDecoration(
-                  labelText: 'Account Number (for Crypto)',
-                  filled: true,
-                  fillColor: Color.fromRGBO(41, 45, 46, 1),
-                  labelStyle: TextStyle(color: Colors.white),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-              ),
-            ] else if (selectedMethod == 'Stripe' ||
-                selectedMethod == 'PayPal') ...[
-              TextFormField(
-                controller: emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email Address',
-                  filled: true,
-                  fillColor: Color.fromRGBO(41, 45, 46, 1),
-                  labelStyle: TextStyle(color: Colors.white),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
 
             // Available and Locked Funds Display
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Available: \$$availableAmount',
-                    style: const TextStyle(color: Colors.white)),
-                Text('Locked Funds: \$$lockedFunds',
+                Text(
+                  'Available: ${NumberFormat.simpleCurrency(name: userCurrency).format(userBalance ?? 0.0)}',
+                  style: const TextStyle(color: Colors.white),
+                ),
+                Text(
+                    'Locked Funds: ${NumberFormat.simpleCurrency(name: userCurrency).format(lockedFunds ?? 0.0)}',
                     style: const TextStyle(color: Colors.white)),
               ],
             ),
@@ -436,7 +464,7 @@ class _WithdrawPageState extends State<WithdrawPage> {
               ),
               onPressed: () {
                 if (selectedCurrency != null &&
-                    selectedMethod != null &&
+                    selectedPlatform != null &&
                     amountController.text.isNotEmpty) {
                   _onWithdraw();
                 } else {

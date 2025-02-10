@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:homepage_project/methods/appbar.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/play-video.dart';
+import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/affiliate.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:marquee/marquee.dart';
@@ -48,7 +50,7 @@ class HosterListPage extends StatefulWidget {
 }
 
 class _HosterListPageState extends State<HosterListPage> {
-  final int _selectedIndex = 2;
+  final int _selectedIndex = 0;
   late Future<List<Hoster>> _futureHosters;
   bool _isLoggedIn = false; // Simple boolean state
 
@@ -69,7 +71,7 @@ class _HosterListPageState extends State<HosterListPage> {
 
   void _onItemTapped(int index) {
     List<Widget> pages = [
-      const Homepage(),
+      const reelsPage(),
       const GamesPage(),
       const HosterListPage(),
       const ProfilePage(),
@@ -104,118 +106,23 @@ class _HosterListPageState extends State<HosterListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: secondaryColor,
-        toolbarHeight: 80,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 0), // Adjust padding for logo
-          child: Container(
-            margin: EdgeInsets.only(left: 15),
-            child: Image.asset(
-              'assets/images/logo-Old.png', // Replace with your logo path
-              // fit: BoxFit.contain,
-              // height: 200, // Larger logo size
-              // width: 80,
-            ),
-          ),
-        ),
-        actions: [
-          _isLoggedIn
-              ? Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: Row(
-                    children: [
-                      const Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            "Balance:",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            "\$00.00",
-                            style: TextStyle(
-                              color: Colors.greenAccent,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 15),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const ProfilePage()),
-                          );
-                        },
-                        child: const Padding(
-                          padding: EdgeInsets.all(2.0),
-                          child: CircleAvatar(
-                            backgroundImage:
-                                AssetImage('assets/images/Avatar_image.png'),
-                            radius: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: mainColor,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(5),
-                          child: GestureDetector(
-                            onTap: () => {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => SignIn(),
-                                  ))
-                            },
-                            child: Text(
-                              "Login",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-        ],
-      ),
+      appBar: AppBarWidget(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        selectedItemColor: mainColor,
+        selectedItemColor: Colors.grey,
         unselectedItemColor:
             Colors.grey, // Optionally, adjust unselected item color
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.play_circle),
+            label: 'Reels',
+            backgroundColor: secondaryColor,
+          ),
           BottomNavigationBarItem(
               icon: Icon(Icons.sports_esports), label: 'Games'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.play_circle),
-            label: 'Hoster',
+            icon: Icon(Icons.wallet),
+            label: 'Wallet',
             backgroundColor: secondaryColor,
           ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),

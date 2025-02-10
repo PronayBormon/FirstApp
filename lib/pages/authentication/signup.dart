@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/games.dart';
@@ -25,7 +26,9 @@ class SignUp extends StatefulWidget {
 class _SignUpState extends State<SignUp> {
   final _formKey = GlobalKey<FormState>();
 
+  String? _fullname;
   String? _username;
+  String? _email;
   String? _password;
   String? _retypePassword;
   String? _inviteCode;
@@ -117,26 +120,52 @@ class _SignUpState extends State<SignUp> {
 
   void _register() async {
     final data = {
+      'name': _fullname ?? '',
       'username': _username ?? '',
+      'email': _email ?? '',
       'password': _password ?? '',
       'password_confirmation': _retypePassword ?? '',
       'inviteCode': _inviteCode ?? '',
     };
-    // print(data);
-    final result = await API().postRequest(route: "/register", data: data);
+    print(data);
+    final result = await API().postRequest(route: "/userRegister", data: data);
     final response = jsonDecode(result.body);
-    // if (response['status'] == 1) {
-    //   // Navigator.of(context).pushReplacement(
-    //   //   MaterialPageRoute(
-    //   //     builder: (context) => Homepage(),
-    //   //   ),
-    //   // );
-    //   Navigator.pushReplacement(
-    //     context,
-    //     MaterialPageRoute(builder: (context) => const Homepage()),
-    //   );
-    print(jsonDecode(result.body));
-    // }
+    final status = response['user']['status'] ?? '';
+
+    if (status == 1) {
+      // Navigator.of(context).pushReplacement(
+      //   MaterialPageRoute(
+      //     builder: (context) => Homepage(),
+      //   ),
+      // );
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignIn()),
+      );
+      print('=======================$status');
+    } else {
+      // Default error message
+      String errorMessage = "Registration failed. Please try again.";
+
+      if (response.containsKey('message')) {
+        String message = response['message'].toString();
+
+        if (message.contains("Integrity constraint violation: 1062")) {
+          errorMessage =
+              "This email is already registered. Please use a different email.";
+        } else {
+          errorMessage =
+              message; // Show the API message if it's not a duplicate entry error
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
     // print(jsonDecode(result.body));
   }
 
@@ -207,8 +236,49 @@ class _SignUpState extends State<SignUp> {
                 ),
                 const SizedBox(height: 20),
                 _buildTextField(
+                  label: 'Full name',
+                  onChanged: (value) => _fullname = value,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your fullname';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  child: Column(
+                    children: [
+                      Text(
+                        " * The username must be 5-11 characters long and can only contain lowercase letters and numbers.",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+                _buildTextField(
                   label: 'Username',
                   onChanged: (value) => _username = value,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a username';
+                    }
+                    if (!RegExp(r'^[a-z0-9]{5,11}$').hasMatch(value)) {
+                      return 'Username must be 5-11 characters, lowercase, and numbers only';
+                    }
+                    return null;
+                  },
+                ),
+
+                const SizedBox(height: 20),
+                _buildTextField(
+                  label: 'Email',
+                  onChanged: (value) => _email = value,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter a username';
@@ -259,13 +329,13 @@ class _SignUpState extends State<SignUp> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Or Sign Up with',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 10),
-                _buildSocialButtons(),
-                const SizedBox(height: 10),
+                // const Text(
+                //   'Or Sign Up with',
+                //   style: TextStyle(color: Colors.white70),
+                // ),
+                // const SizedBox(height: 10),
+                // _buildSocialButtons(),
+                // const SizedBox(height: 10),
                 TextButton(
                   onPressed: () {
                     Navigator.push(

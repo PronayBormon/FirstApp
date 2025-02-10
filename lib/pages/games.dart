@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:homepage_project/helper/constant.dart';
+import 'package:homepage_project/methods/appbar.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
+import 'package:homepage_project/pages/gamePlatforms.dart';
 import 'package:homepage_project/pages/game_list.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/play-Game.dart';
@@ -165,106 +167,7 @@ class _GamesPageState extends State<GamesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: secondaryColor,
-        toolbarHeight: 80,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 0), // Adjust padding for logo
-          child: Container(
-            margin: EdgeInsets.only(left: 15),
-            child: Image.asset(
-              'assets/images/logo-Old.png', // Replace with your logo path
-              // fit: BoxFit.contain,
-              // height: 200, // Larger logo size
-              // width: 80,
-            ),
-          ),
-        ),
-        actions: [
-          _isLoggedIn
-              ? Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: Row(
-                    children: [
-                      const Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            "Balance:",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            "\$00.00",
-                            style: TextStyle(
-                              color: Colors.greenAccent,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 15),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const ProfilePage()),
-                          );
-                        },
-                        child: const Padding(
-                          padding: EdgeInsets.all(2.0),
-                          child: CircleAvatar(
-                            backgroundImage:
-                                AssetImage('assets/images/Avatar_image.png'),
-                            radius: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: mainColor,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(5),
-                          child: GestureDetector(
-                            onTap: () => {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => SignIn(),
-                                  ))
-                            },
-                            child: Text(
-                              "Login",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-        ],
-      ),
+      appBar: AppBarWidget(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
@@ -329,6 +232,68 @@ class _GamesPageState extends State<GamesPage> {
                         ),
                         const SizedBox(height: 5),
                         const Text("Personal Details",
+                            textAlign:
+                                TextAlign.center, // Align text to the center
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            )),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const GameListPage(
+                            gameCode: "cc01",
+                          ),
+                        ),
+                      ),
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return pinkGradient.createShader(bounds);
+                          },
+                          child: const Icon(Icons.gamepad_rounded,
+                              size: 25, color: Colors.white),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text("Games Platform",
+                            textAlign:
+                                TextAlign.center, // Align text to the center
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            )),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HosterListPage(),
+                        ),
+                      ),
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (Rect bounds) {
+                            return pinkGradient.createShader(bounds);
+                          },
+                          child: const Icon(Icons.videocam,
+                              size: 25, color: Colors.white),
+                        ),
+                        const SizedBox(height: 5),
+                        const Text("Hosters",
                             textAlign:
                                 TextAlign.center, // Align text to the center
                             style: TextStyle(
@@ -428,36 +393,7 @@ class _GamesPageState extends State<GamesPage> {
                       ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Transection(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.history,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Transections",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
+                  //
                 ],
               ),
             ),

@@ -25,6 +25,9 @@ dependencies:
   flutter_html: ^3.0.0-beta.2
   flutter_inappwebview: ^6.1.5
   marquee: ^2.3.0
+  qr_flutter: ^4.1.0
+  flutter_launcher_icons: ^0.14.3
+  intl: ^0.20.2
   # video_player: ^2.9.2
 
 dev_dependencies:
@@ -37,6 +40,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+
   # Asset management.
   assets:
     - assets/images/
@@ -45,8 +49,6 @@ flutter:
     - assets/categories.json
     - assets/images/logo_game.png
     - assets/images/reels.png
-    # Example asset placeholders:
-    # - assets/images/icon-logo.png
     # - images/a_dot_ham.jpeg
 
   # Example custom fonts (uncomment if needed).
@@ -56,3 +58,27 @@ flutter:
   #       - asset: fonts/CustomFont-Regular.ttf
   #       - asset: fonts/CustomFont-Bold.ttf
   #         weight: 700
+
+  
+# flutter_icons:
+#   android: true
+#   ios: true
+#   image_path: "assets/images/logo-Old.png"
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/logo_game.png"
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  web:
+    generate: true
+    image_path: "assets/images/logo_game.png"
+    background_color: "#hexcode"
+    theme_color: "#hexcode"
+  windows:
+    generate: true
+    image_path: "assets/images/logo_game.png"
+    icon_size: 48 # min:48, max:256, default: 48
+  macos:
+    generate: true
+    image_path: "assets/images/logo_game.png"

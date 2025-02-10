@@ -21,6 +21,8 @@ import 'package:marquee/marquee.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+const _secureStorage = FlutterSecureStorage();
+
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
 const secondaryColor = Color.fromRGBO(41, 45, 46, 1);
@@ -30,7 +32,6 @@ const pinkGradient = LinearGradient(
     Color.fromRGBO(229, 15, 112, 1),
   ],
 );
-const _secureStorage = FlutterSecureStorage();
 
 class Game {
   final int id;

@@ -124,13 +124,34 @@ class _SignInState extends State<SignIn> {
           await _secureStorage.write(
               key: 'name', value: userdata?['name'] ?? '');
 
+          await _secureStorage.write(
+              key: 'id', value: userdata?['id']?.toString() ?? '');
+
+          await _secureStorage.write(
+              key: 'available_balance',
+              value: userdata?['available_balance']?.toString() ?? '');
+          await _secureStorage.write(
+              key: 'role_id', value: userdata?['role_id']?.toString() ?? '');
+          await _secureStorage.write(
+              key: 'phone_number',
+              value: userdata?['phone_number']?.toString() ?? '');
+          await _secureStorage.write(
+              key: 'whtsapp', value: userdata?['whtsapp']?.toString() ?? '');
+          await _secureStorage.write(
+              key: 'register_bonus',
+              value: userdata?['register_bonus']?.toString() ?? '');
+
           // Redirect to Homepage
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const Homepage()),
+            MaterialPageRoute(
+              builder: (context) => ProfilePage(),
+            ),
           );
         } else {
-          _showError(response['message'] ?? 'Login failed. Please try again.');
+          final response = jsonDecode(result.body);
+          final Error = response['errors']['account'];
+          _showError('$Error' ?? 'Login failed. Please try again.');
         }
       } catch (error) {
         print("Error during login: $error"); // Debug log
@@ -286,13 +307,13 @@ class _SignInState extends State<SignIn> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Or Signin with',
-                style: TextStyle(color: Colors.white70),
-              ),
-              const SizedBox(height: 10),
-              _buildSocialButtons(),
-              const SizedBox(height: 10.0),
+              // const Text(
+              //   'Or Signin with',
+              //   style: TextStyle(color: Colors.white70),
+              // ),
+              // const SizedBox(height: 10),
+              // _buildSocialButtons(),
+              // const SizedBox(height: 10.0),
               TextButton(
                 onPressed: () {
                   Navigator.push(

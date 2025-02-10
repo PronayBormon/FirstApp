@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:homepage_project/methods/appbar.dart';
 import 'package:homepage_project/pages/HomePage.dart';
+import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/games.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/reels.dart';
+import 'package:homepage_project/pages/user/affiliate.dart';
 import 'package:homepage_project/pages/user/deposit.dart';
 import 'package:homepage_project/pages/user/personal-details.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:homepage_project/pages/user/transections.dart';
 import 'package:homepage_project/pages/user/withdraw.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -18,7 +22,7 @@ const pinkGradient = LinearGradient(
 );
 
 String depositPolicy =
-    "Pronay(String data, {Key? key, TextStyle? style, StrutStyle? strutStyle, TextAlign? textAlign, TextDirection? textDirection, Locale? locale, bool? softWrap, TextOverflow? overflow, double? textScaleFactor, TextScaler? textScaler, int? maxLines, String? semanticsLabel, TextWidthBasis? textWidthBasis, TextHeightBehavior? textHeightBehavior, Color? selectionColor})";
+    "Encrypt private keys, enforce 2FA for transactions, and verify deposits with blockchain confirmations. Store funds securely in cold wallets, while monitoring for suspicious activity. Additionally, notify users of deposits and allow them to whitelist trusted addresses. Make sure users are educated on secure wallet practices to protect their assets.";
 
 class WalletPage extends StatefulWidget {
   const WalletPage({super.key});
@@ -29,7 +33,55 @@ class WalletPage extends StatefulWidget {
 
 class _WalletPageState extends State<WalletPage> {
   final int _selectedIndex = 2; // Default to Profile
-  final double _balance = 1000.00; // Example balance
+  final _secureStorage = FlutterSecureStorage();
+  bool _isLoggedIn = false; // Simple boolean state
+
+  String? _userName;
+  String? _email;
+  double? _balance;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+    _checkTokenAndRedirect();
+  }
+
+  // Check if the token exists and update state
+  Future<void> _checkLoginStatus() async {
+    final token = await _secureStorage.read(key: 'access_token');
+    final username = await _secureStorage.read(key: 'username');
+    final email = await _secureStorage.read(key: 'email');
+    final available_balance =
+        await _secureStorage.read(key: 'available_balance');
+
+    setState(() {
+      _isLoggedIn = token != null;
+      _userName = username;
+      _email = email;
+      _balance =
+          available_balance != null ? double.tryParse(available_balance) : null;
+    });
+  }
+
+  void _checkTokenAndRedirect() async {
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignIn()),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please Complate Your Login.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   void _onItemTapped(int index) {
     List<Widget> pages = [
@@ -48,28 +100,7 @@ class _WalletPageState extends State<WalletPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Wallet', style: TextStyle(color: mainColor)),
-        centerTitle: true,
-        backgroundColor: secondaryColor,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SvgPicture.asset('assets/icons/chevron-left.svg',
-                color: Colors.white, height: 25, width: 25),
-          ),
-        ),
-        // actions: [
-        //   IconButton(
-        //     icon: SvgPicture.asset('assets/icons/menu.svg',
-        //         color: Colors.white, height: 25, width: 25),
-        //     onPressed: () {
-        //       Scaffold.of(context).openDrawer();
-        //     },
-        //   ),
-        // ],
-      ),
+      appBar: AppBarWidget(),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
@@ -144,9 +175,13 @@ class _WalletPageState extends State<WalletPage> {
                     context, Icons.upload, 'Deposit', const DepositPage()),
                 _gridItem(
                     context, Icons.download, 'Withdraw', const WithdrawPage()),
-                _gridItem(context, Icons.star, 'Bonus', const Homepage()),
-                _gridItem(context, Icons.history, 'Transactions',
-                    const Transection()),
+                _gridItem(
+                    context, Icons.videocam, 'Hosters', const HosterListPage()),
+                _gridItem(
+                    context, Icons.sports_esports, 'Games', const GamesPage()),
+
+                _gridItem(
+                    context, Icons.groups, 'Affiliate', const AffiliatePage()),
               ],
             ),
             const SizedBox(height: 10),

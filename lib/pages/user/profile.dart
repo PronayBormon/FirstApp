@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:homepage_project/methods/appbar.dart';
 import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/games.dart';
@@ -21,6 +22,8 @@ import 'package:homepage_project/pages/user/transections.dart';
 import 'package:homepage_project/pages/user/wallet.dart';
 import 'package:homepage_project/pages/user/withdraw.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -32,6 +35,7 @@ const pinkGradient = LinearGradient(
   ],
 );
 const _secureStorage = FlutterSecureStorage();
+bool _isLoggedIn = false;
 
 Future<void> logout(BuildContext context) async {
   // Clear session data from secure storage
@@ -53,22 +57,65 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   int _selectedIndex = 3;
-
-  bool _isLoggedIn = false; // Simple boolean state
+  String? _userName;
+  String? _email;
+  double? _available_balance;
 
   @override
   void initState() {
     super.initState();
     _checkLoginStatus();
     _checkTokenAndRedirect();
+    _GetRefferCode();
   }
 
   // Check if the token exists and update state
   Future<void> _checkLoginStatus() async {
     final token = await _secureStorage.read(key: 'access_token');
+    final username = await _secureStorage.read(key: 'username');
+    final email = await _secureStorage.read(key: 'email');
+    final available_balance =
+        await _secureStorage.read(key: 'available_balance');
+
     setState(() {
       _isLoggedIn = token != null;
+      _userName = username;
+      _email = email;
+      _available_balance =
+          available_balance != null ? double.tryParse(available_balance) : null;
     });
+  }
+
+  Future<void> _GetRefferCode() async {
+    final url =
+        Uri.parse('https://api.totomonkey.com/api/user/getRefferalCode');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    final response = await http.get(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      // body: jsonEncode({'tokens': token}),
+    );
+
+    try {
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final user = responseData['user'];
+        final username = responseData['user']['username'];
+        final email = responseData['user']['email'];
+        // final available_balance = responseData['user']['available_balance'];
+
+        // print("user  : $user");
+        // print("Email  : $email");
+      } else {
+        print('Deposit failed: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   void _checkTokenAndRedirect() async {
@@ -78,6 +125,13 @@ class _ProfilePageState extends State<ProfilePage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const SignIn()),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please Complate Your Login.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
       );
     }
   }
@@ -102,110 +156,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    const String userId = "123456"; // Example user ID
-    const String userName = "Fox"; // Example user name
-
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        backgroundColor: secondaryColor,
-        toolbarHeight: 80,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 0), // Adjust padding for logo
-          child: Container(
-            margin: EdgeInsets.only(left: 15),
-            child: Image.asset(
-              'assets/images/logo-Old.png', // Replace with your logo path
-              // fit: BoxFit.contain,
-              // height: 200, // Larger logo size
-              // width: 80,
-            ),
-          ),
-        ),
-        actions: [
-          _isLoggedIn
-              ? Padding(
-                  padding: const EdgeInsets.all(15),
-                  child: Row(
-                    children: [
-                      const Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            "Balance:",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            "\$00.00",
-                            style: TextStyle(
-                              color: Colors.greenAccent,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 15),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const ProfilePage()),
-                          );
-                        },
-                        child: const Padding(
-                          padding: EdgeInsets.all(2.0),
-                          child: CircleAvatar(
-                            backgroundImage:
-                                AssetImage('assets/images/Avatar_image.png'),
-                            radius: 18,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: mainColor,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(5),
-                          child: GestureDetector(
-                            onTap: () => {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => SignIn(),
-                                  ))
-                            },
-                            child: Text(
-                              "Login",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-        ],
-      ),
+      appBar: AppBarWidget(), // Use a comma, not a semicolon
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: const Color.fromARGB(255, 236, 7, 122),
@@ -242,31 +194,38 @@ class _ProfilePageState extends State<ProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Profile Picture and User Info
-            const Row(
+
+            Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 30,
                   backgroundImage: AssetImage('assets/images/Avatar_image.png'),
                 ),
-                SizedBox(width: 15),
+                const SizedBox(width: 15),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      userName,
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold),
+                      // _userName ?? "FOX",
+                      '${_userName?.toUpperCase() ?? "FOX"}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
-                      'User ID: $userId',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      'Email: ${_email ?? "N/A"}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
+
             const SizedBox(height: 20),
             // Buttons for Withdraw and Deposit
             Row(
@@ -277,24 +236,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 _actionButton(context, 'Deposit', const DepositPage()),
               ],
             ),
-            const SizedBox(height: 20),
-            // Profile Information Section
-            const Text('Profile Information',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            // Options Grid for Profile Information
-            // GridView.count(
-            //   shrinkWrap: true,
-            //   physics: const NeverScrollableScrollPhysics(),
-            //   crossAxisCount: 4,
-            //   childAspectRatio: 1,
-            //   crossAxisSpacing: 3,
-            //   mainAxisSpacing: 3,
-            //   children: const [],
-            // ),
+
             const SizedBox(height: 10),
             // Options Grid for Balance
             GridView.count(
@@ -305,28 +247,31 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisSpacing: 3,
               mainAxisSpacing: 3,
               children: [
-                _gridItem(context, Icons.person, 'Personal Details',
-                    const PersonalDetails()),
-                _gridItem(context, Icons.account_balance_wallet, 'Wallet',
-                    const WalletPage()),
+                _gridItem(context, Icons.play_circle_fill, 'Reels',
+                    const reelsPage()),
+                _gridItem(
+                    context, Icons.sports_esports, 'Games', const GamesPage()),
+                _gridItem(
+                    context, Icons.videocam, 'Hosters', const HosterListPage()),
+                // _gridItem(context, Icons.history, 'Transactions',
+                //     const Transection()),
+                _gridItem(context, Icons.wallet, 'Wallet', const WalletPage()),
                 _gridItem(
                     context, Icons.download, 'Deposit', const DepositPage()),
                 _gridItem(
                     context, Icons.upload, 'Withdraw', const WithdrawPage()),
-                _gridItem(context, Icons.star, 'Bonus', const reelsPage()),
-                _gridItem(context, Icons.history, 'Transactions',
-                    const Transection()),
               ],
             ),
+            const SizedBox(height: 20),
 
             // Profile Information Section
-            const Text('Security',
+            const Text('Security ',
                 style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            // Options Grid for Profile Information
+
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -346,35 +291,22 @@ class _ProfilePageState extends State<ProfilePage> {
               crossAxisSpacing: 3,
               mainAxisSpacing: 3,
               children: [
-                _gridItem(context, Icons.lock, '2FA',
-                    const TwoFactorAuthenticationPage()),
+                _gridItem(context, Icons.person, 'Personal Details',
+                    const PersonalDetails()),
+                // _gridItem(context, Icons.lock, '2FA',
+                //     const TwoFactorAuthenticationPage()),
                 _gridItem(context, Icons.password, 'Change Password',
                     const ChangePasswordPage()),
-                _gridItem(context, Icons.history, 'Login Activity',
-                    const LoginActivityPage()),
-                _gridItem(context, Icons.message, 'Security Questions',
-                    const SecurityQuestionsPage()),
-                _gridItem(context, Icons.privacy_tip, 'Privacy Settings',
-                    const BroadcastSettingsPage()),
-              ],
-            ),
+                // _gridItem(context, Icons.history, 'Login Activity',
+                //     const LoginActivityPage()),
+                // _gridItem(context, Icons.message, 'Security Questions',
+                //     const SecurityQuestionsPage()),
+                // _gridItem(context, Icons.privacy_tip, 'Privacy Settings',
+                //     const BroadcastSettingsPage()),
 
-            const SizedBox(height: 10),
-            // Options Grid for Balance
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 4,
-              childAspectRatio: 1.5,
-              crossAxisSpacing: 3,
-              mainAxisSpacing: 3,
-              children: [
-                _gridItem(context, Icons.share, 'Share', const SharePage()),
                 _gridItem(
                     context, Icons.groups, 'Affiliate', const AffiliatePage()),
-                _gridItem(context, Icons.notifications, 'Notifications',
-                    const NotificationPage()),
-                _gridItem(context, Icons.info, 'About', const AboutPage()),
+                // _gridItem(context, Icons.share, 'Share', const SharePage()),
                 InkWell(
                   onTap: () => logout(context), // Implemented logout function
                   child: Container(
@@ -404,6 +336,58 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
 
             const SizedBox(height: 10),
+
+            // const Text('Settings',
+            //     style: TextStyle(
+            //         color: Colors.white,
+            //         fontSize: 16,
+            //         fontWeight: FontWeight.bold)),
+
+            // const SizedBox(height: 10),
+            // // Options Grid for Balance
+            // GridView.count(
+            //   shrinkWrap: true,
+            //   physics: const NeverScrollableScrollPhysics(),
+            //   crossAxisCount: 4,
+            //   childAspectRatio: 1.5,
+            //   crossAxisSpacing: 3,
+            //   mainAxisSpacing: 3,
+            //   children: [
+            //     // _gridItem(context, Icons.share, 'Share', const SharePage()),
+            //     _gridItem(
+            //         context, Icons.groups, 'Affiliate', const AffiliatePage()),
+            //     // _gridItem(context, Icons.notifications, 'Notifications',
+            //     //     const NotificationPage()),
+            //     // _gridItem(context, Icons.info, 'About', const AboutPage()),
+            //     InkWell(
+            //       onTap: () => logout(context), // Implemented logout function
+            //       child: Container(
+            //         child: Column(
+            //           mainAxisAlignment: MainAxisAlignment.center,
+            //           children: [
+            //             ShaderMask(
+            //               shaderCallback: (Rect bounds) {
+            //                 return pinkGradient.createShader(bounds);
+            //               },
+            //               child: const Icon(Icons.logout,
+            //                   size: 25, color: Colors.white),
+            //             ),
+            //             const SizedBox(height: 5),
+            //             const Text('Logout',
+            //                 textAlign:
+            //                     TextAlign.center, // Align text to the center
+            //                 style: TextStyle(
+            //                   color: Colors.white,
+            //                   fontSize: 12,
+            //                 )),
+            //           ],
+            //         ),
+            //       ),
+            //     ), // Call logout method
+            //   ],
+            // ),
+
+            // const SizedBox(height: 10),
           ],
         ),
       ),
