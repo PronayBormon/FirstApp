@@ -48,6 +48,7 @@ flutter:
     - assets/icons/
     - assets/categories.json
     - assets/images/logo_game.png
+    - assets/images/logo-Old.png
     - assets/images/reels.png
     # - images/a_dot_ham.jpeg
 
@@ -60,25 +61,20 @@ flutter:
   #         weight: 700
 
   
-# flutter_icons:
-#   android: true
-#   ios: true
-#   image_path: "assets/images/logo-Old.png"
-
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/logo_game.png"
+  image_path: "assets/images/logo-Old.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
   web:
     generate: true
-    image_path: "assets/images/logo_game.png"
+    image_path: "assets/images/logo-Old.png"
     background_color: "#hexcode"
     theme_color: "#hexcode"
   windows:
     generate: true
-    image_path: "assets/images/logo_game.png"
+    image_path: "assets/images/logo-Old.png"
     icon_size: 48 # min:48, max:256, default: 48
   macos:
     generate: true
-    image_path: "assets/images/logo_game.png"
+    image_path: "assets/images/logo-Old.png"

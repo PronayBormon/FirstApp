@@ -1,18 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:homepage_project/helper/constant.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:homepage_project/methods/appbar.dart';
-import 'package:homepage_project/pages/HomePage.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
-import 'package:homepage_project/pages/game_list.dart';
-import 'package:homepage_project/pages/hoster-list.dart';
-import 'package:homepage_project/pages/play-Game.dart';
+import 'package:homepage_project/pages/games.dart';
+import 'package:homepage_project/pages/play-platformGame.dart';
 import 'package:homepage_project/pages/reels.dart';
-import 'package:homepage_project/pages/user/deposit.dart';
-import 'package:homepage_project/pages/user/personal-details.dart';
 import 'package:homepage_project/pages/user/profile.dart';
-import 'package:homepage_project/pages/user/transections.dart';
 import 'package:homepage_project/pages/user/wallet.dart';
-import 'package:homepage_project/pages/user/withdraw.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -30,107 +24,177 @@ const pinkGradient = LinearGradient(
   ],
 );
 const _secureStorage = FlutterSecureStorage();
+const baseImageUrl =
+    'https://api.totomonkey.com'; // Your base API URL for images
 
-class GameType {
-  final String id;
-  final String name;
-  final String imagepath; // Explicitly defining the type as String
-
-  GameType({
-    required this.id,
-    required this.name,
-    required this.imagepath,
-  });
-
-  factory GameType.fromJson(Map<String, dynamic> json) {
-    return GameType(
-      id: json['id'].toString(),
-      name: json['name'],
-      imagepath: json[
-          'imagepath'], // Assuming imagepath is a string (URL or file path)
-    );
-  }
-}
-
-class Game {
-  final int id;
-  final String name;
-  final String imagePath;
-  final String slug;
-
-  Game({
-    required this.id,
-    required this.name,
-    required this.imagePath,
-    required this.slug,
-  });
-
-  factory Game.fromJson(Map<String, dynamic> json) {
-    return Game(
-      id: json['id'],
-      name: json['name'],
-      imagePath: json['imagepath'],
-      slug: json['slug'],
-    );
-  }
-}
+// const _secureStorage = FlutterSecureStorage();
 
 class GamesPlatform extends StatefulWidget {
-  const GamesPlatform({super.key});
+  final dSlug;
+  const GamesPlatform({super.key, required this.dSlug});
 
   @override
   _GamesPlatformState createState() => _GamesPlatformState();
 }
 
+class GameplatformsList {
+  final String id;
+  final String name;
+  final String slug;
+  final String imagepath; // Explicitly defining the type as String
+
+  GameplatformsList({
+    required this.id,
+    required this.name,
+    required this.slug,
+    required this.imagepath,
+  });
+
+  factory GameplatformsList.fromJson(Map<String, dynamic> json) {
+    return GameplatformsList(
+      id: json['id'].toString(),
+      name: json['name'],
+      slug: json['slug'],
+      imagepath: '$baseImageUrl${json['image']}', // Prepending base URL
+    );
+  }
+}
+
+class Game {
+  final String id;
+  final String name;
+  final String slug;
+  final String imagepath;
+
+  Game({
+    required this.id,
+    required this.name,
+    required this.slug,
+    required this.imagepath,
+  });
+
+  factory Game.fromJson(Map<String, dynamic> json) {
+    return Game(
+      id: json['id'].toString(),
+      name: json['name'],
+      slug: json['slug'],
+      imagepath: '$baseImageUrl${json['image']}',
+    );
+  }
+}
+
 class _GamesPlatformState extends State<GamesPlatform> {
   final int _selectedIndex = 1;
-  late Future<List<Game>> _futureGames;
-  late Future<List<GameType>> _futureGameTypes;
-  String _selectedFilter = "4"; // Default game type ID
   bool _isLoggedIn = false; // Simple boolean state
+  Future<List<GameplatformsList>>? _futureGameTypes;
+  Future<List<dynamic>>? _futureGamesList;
+  String? _selectedFilter;
 
   @override
   void initState() {
     super.initState();
-    _futureGameTypes = fetchGameTypes();
-    _futureGames = fetchGamesByType(_selectedFilter);
     _checkLoginStatus();
+    _selectedFilter = widget.dSlug; // Default game type slug
+    _checkTokenAndRedirect();
+    _futureGameTypes =
+        _fetchGameTypes(); // Initialize the future with the fetched game types
+
+    _futureGamesList = _fetchGamesForPlatform(
+        _selectedFilter ?? ""); // Fetch games for default platform
   }
 
-  Future<List<GameType>> fetchGameTypes() async {
-    final response = await http.get(
-      Uri.parse('https://api.totomonkey.com/api/public/allGamesType'),
-    );
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      if (jsonResponse['success']) {
-        var data = jsonResponse['data'];
-        if (data is List) {
-          return data.map((json) => GameType.fromJson(json)).toList();
-        }
-      }
+  void _checkTokenAndRedirect() async {
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignIn()),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please Complate Your Login.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
     }
-    throw Exception('Failed to load game types');
   }
 
-  Future<List<Game>> fetchGamesByType(String gameTypeId) async {
-    final response = await http.get(
-      Uri.parse(
-          'https://api.totomonkey.com/api/public/gameTypeWisePlatformList?game_type_id=$gameTypeId'),
-    );
-    if (response.statusCode == 200) {
-      final jsonResponse = json.decode(response.body);
-      if (jsonResponse['success']) {
-        var data = jsonResponse['data'];
-        if (data is List) {
-          return data.map((json) => Game.fromJson(json)).toList();
+  // Fetch the list of available game types (platforms)
+  Future<List<GameplatformsList>> _fetchGameTypes() async {
+    final url = Uri.parse('https://api.totomonkey.com/api/games/gamePltfmAll');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null)
+      return []; // Return an empty list if token is not available
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final data = responseData["data"];
+
+        if (data != null && data is List) {
+          return data
+              .map((platformData) => GameplatformsList.fromJson(platformData))
+              .toList();
+        } else {
+          return [];
         }
+      } else {
+        return [];
       }
+    } catch (e) {
+      print('Error fetching game types: $e');
+      return [];
     }
-    throw Exception('Failed to load games');
   }
 
-  // Check if the token exists and update state
+  // Fetch the list of games for the selected platform (using its slug)
+  Future<List<dynamic>> _fetchGamesForPlatform(String slug) async {
+    if (slug.isEmpty) {
+      print('Error: Slug is empty');
+      return []; // Return empty list if the slug is invalid
+    }
+
+    final url = Uri.parse(
+        'https://api.totomonkey.com/api/public/pltformWiseGame?slug=$slug');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) return []; // Return empty if token is not available
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        return responseData["data"] ?? []; // Return the list of games
+      } else {
+        print('Error: ${response.statusCode} - ${response.body}');
+        return [];
+      }
+    } catch (e) {
+      print('Error fetching games for platform: $e');
+      return [];
+    }
+  }
+
+  // Check if the user is logged in
   Future<void> _checkLoginStatus() async {
     final token = await _secureStorage.read(key: 'access_token');
     setState(() {
@@ -138,10 +202,20 @@ class _GamesPlatformState extends State<GamesPlatform> {
     });
   }
 
+  // Handle platform click
+  void _onPlatformClick(String slug) {
+    print('Selected platform slug: $slug');
+    setState(() {
+      _selectedFilter = slug; // Update the selected platform slug
+      _futureGamesList =
+          _fetchGamesForPlatform(slug); // Fetch games for the selected platform
+    });
+  }
+
   void _onItemTapped(int index) {
     List<Widget> pages = [
       const reelsPage(),
-      const GamesPlatform(),
+      const GamesPage(),
       const WalletPage(),
       const ProfilePage(),
     ];
@@ -149,17 +223,6 @@ class _GamesPlatformState extends State<GamesPlatform> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => pages[index]),
-    );
-  }
-
-  void _onGameTapped(Game game) {
-    // print("${game.slug}, $_selectedFilter");
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            HtmlPage(platType: game.slug, gameType: _selectedFilter),
-      ),
     );
   }
 
@@ -200,195 +263,356 @@ class _GamesPlatformState extends State<GamesPlatform> {
       body: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                childAspectRatio: 1.25,
-                crossAxisSpacing: 3,
-                mainAxisSpacing: 3,
-              ),
-              delegate: SliverChildListDelegate(
-                [
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PersonalDetails(),
-                        ),
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                children: [
+                  Container(
+                    margin: EdgeInsets.only(top: 15),
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context), // Navigate back
+                      child: Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
                       ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.person,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Personal Details",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HosterListPage(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.videocam,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Hosters",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const WalletPage(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.account_balance_wallet,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Wallet",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DepositPage(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.download,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Deposit",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const WithdrawPage(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.upload,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Withdraw",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
-                  //
                 ],
               ),
             ),
           ),
           SliverPadding(
-            padding: EdgeInsets.only(left: 20, right: 20, top: 0, bottom: 0),
+            padding: const EdgeInsets.all(20),
             sliver: SliverToBoxAdapter(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: secondaryColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                height: 30, // Ensure the height is defined
-                child: Marquee(
-                  text:
-                      "'Welcome to FansGame! 🎮Join a vibrant community of gamers, enjoy thrilling challenges, and explore endless entertainment. Play, compete, and connect with fellow fans from around the world! 🌍🔥",
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
+              child: GestureDetector(
+                onTap: () {
+                  // Navigate to AffiliatePage when tapped
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GamesPage()),
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Container(
+                    width: double.infinity,
+                    // height: 200, // Adjust the height as needed
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      'assets/images/bonusBannar.jpg',
+                      fit: BoxFit.fill,
+                      width: double.infinity,
+                    ),
                   ),
-                  scrollAxis: Axis.horizontal,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                 ),
               ),
             ),
           ),
           SliverPadding(
-            padding: EdgeInsets.all(10),
+            padding: EdgeInsets.only(
+              // top: 10,
+              left: 20,
+              right: 20,
+              bottom: 8,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                "Games by Providers",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            sliver: FutureBuilder<List<GameplatformsList>>(
+              future: _futureGameTypes,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 5,
+                      childAspectRatio: 1,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Container(
+                        padding: EdgeInsets.all(5),
+                        child: Center(
+                          child: Shimmer.fromColors(
+                            baseColor: secondaryColor,
+                            highlightColor:
+                                const Color.fromARGB(255, 94, 93, 93),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: secondaryColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      childCount: 5, // Number of shimmer boxes
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return SliverToBoxAdapter(
+                    child: Center(child: Text('Error: ${snapshot.error}')),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: Center(child: Text('No game platforms available.')),
+                  );
+                } else {
+                  // Data is available, display clickable platforms
+                  final gameTypes = snapshot.data!;
+                  return SliverToBoxAdapter(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: gameTypes.map((gameType) {
+                          return GestureDetector(
+                              onTap: () => _onPlatformClick(gameType.slug),
+                              child: Column(
+                                children: [
+                                  // Conditional widget rendering based on the selected filter
+                                  if (_selectedFilter == gameType.slug)
+                                    Container(
+                                      margin: EdgeInsets.symmetric(
+                                          horizontal: 3, vertical: 10),
+                                      width: 100,
+                                      decoration: BoxDecoration(
+                                        color: mainColor,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: EdgeInsets.all(5),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          ClipOval(
+                                            child: Container(
+                                              color: Colors.white,
+                                              child: gameType
+                                                      .imagepath.isNotEmpty
+                                                  ? Image.network(
+                                                      gameType.imagepath,
+                                                      width: 50,
+                                                      height: 50,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : Icon(Icons.image, size: 50),
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          Text(
+                                            gameType.name,
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  // Else block to show something when the condition is false
+                                  else
+                                    Container(
+                                      margin: EdgeInsets.symmetric(
+                                          horizontal: 3, vertical: 10),
+                                      width: 100,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white24,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      padding: EdgeInsets.all(5),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          ClipOval(
+                                            child: Container(
+                                              color: Colors.white,
+                                              child: gameType
+                                                      .imagepath.isNotEmpty
+                                                  ? Image.network(
+                                                      gameType.imagepath,
+                                                      width: 50,
+                                                      height: 50,
+                                                      fit: BoxFit.cover,
+                                                    )
+                                                  : Icon(Icons.image, size: 50),
+                                            ),
+                                          ),
+                                          SizedBox(height: 10),
+                                          Text(
+                                            gameType.name,
+                                            textAlign: TextAlign.center,
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                ],
+                              ));
+                        }).toList(),
+                      ),
+                    ),
+                  );
+                }
+              },
+            ),
+          ),
+          // Display games for the selected platform
+          SliverPadding(
+            padding:
+                const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 10),
+            sliver: FutureBuilder<List<dynamic>>(
+              future: _futureGamesList,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: 1,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => Container(
+                        padding: EdgeInsets.all(5),
+                        child: Center(
+                          child: Shimmer.fromColors(
+                            baseColor: secondaryColor,
+                            highlightColor:
+                                const Color.fromARGB(255, 94, 93, 93),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: secondaryColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      childCount: 15, // Number of shimmer boxes
+                    ),
+                  );
+                } else if (snapshot.hasError) {
+                  return SliverToBoxAdapter(
+                    child: Center(child: Text('Error: ${snapshot.error}')),
+                  );
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: Center(
+                        child: Text('No games available for this platform.')),
+                  );
+                } else {
+                  final games = snapshot.data!;
+                  return SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      childAspectRatio: .81,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final game = games[index];
+                        return GestureDetector(
+                          onTap: () {
+                            // Handle game click (optional, could navigate to game details page)
+                            // print(game['id']);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => playGames(
+                                  slug: game['id'],
+                                ),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            // padding: EdgeInsets.all(8),
+                            margin: EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              // color: Colors.white24,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Column(
+                              children: [
+                                Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                          10), // Match the container's border radius
+                                      child: Image(
+                                        // Check if the image URL is valid
+                                        image: (game['image'] != null &&
+                                                game['image'].isNotEmpty)
+                                            ? NetworkImage(game['image'])
+                                            : AssetImage(
+                                                    'assets/images/logo_game.png')
+                                                as ImageProvider, // Fallback to asset image
+                                        // width: 70,
+                                        // height: 70,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )),
+                                SizedBox(
+                                  height: 5,
+                                ),
+                                Text(
+                                  game['name'],
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1, // Limit to a single line
+                                  overflow: TextOverflow
+                                      .ellipsis, // Adds ellipsis (...) if text overflows
+                                ),
+                                // Text(
+                                //   game['image'],
+                                //   textAlign: TextAlign.center,
+                                //   style: TextStyle(
+                                //     color: Colors.white,
+                                //     fontSize: 12,
+                                //   ),
+                                // ),
+                                // Text(
+                                //   game['slug'],
+                                //   textAlign: TextAlign.center,
+                                //   style: TextStyle(
+                                //     color: Colors.white,
+                                //     fontSize: 12,
+                                //   ),
+                                // ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      childCount: games.length,
+                    ),
+                  );
+                }
+              },
+            ),
           ),
         ],
       ),

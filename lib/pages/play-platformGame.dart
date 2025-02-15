@@ -12,6 +12,9 @@ import 'package:homepage_project/pages/reels.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:homepage_project/pages/user/wallet.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart'; // Import WebUri
 
 // Define colors
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
@@ -32,17 +35,15 @@ class Game {
   }
 }
 
-class HtmlPage extends StatefulWidget {
-  final String platType;
-  final String gameType;
-
-  const HtmlPage({super.key, required this.platType, required this.gameType});
+class playGames extends StatefulWidget {
+  final int slug;
+  const playGames({super.key, required this.slug});
 
   @override
-  _HtmlPageState createState() => _HtmlPageState();
+  _playGamesState createState() => _playGamesState();
 }
 
-class _HtmlPageState extends State<HtmlPage> {
+class _playGamesState extends State<playGames> {
   late Future<Game> _futureGame; // Type should be Future<Game>
   late InAppWebViewController _webViewController;
   String? gameUrl; // Variable to hold the game URL
@@ -52,10 +53,7 @@ class _HtmlPageState extends State<HtmlPage> {
   @override
   void initState() {
     super.initState();
-    _futureGame = fetchGame(
-        widget.platType,
-        widget
-            .gameType); // This should call the fetchGame method with parameters
+    _futureGame = fetchGame(widget.slug); // Initialize the future here
     _checkTokenAndRedirect();
   }
 
@@ -69,71 +67,42 @@ class _HtmlPageState extends State<HtmlPage> {
         context,
         MaterialPageRoute(builder: (context) => const SignIn()),
       );
-
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(
-      //     content: Text('Please Login.'),
-      //     backgroundColor: Colors.red,
-      //     duration: Duration(seconds: 3),
-      //   ),
-      // );
     }
   }
 
-  // This now returns a Future<Game>
-  Future<Game> fetchGame(String platType, String gameType) async {
-    final data = {'platType': platType, 'gameType': gameType};
+  Future<Game> fetchGame(int slug) async {
+    final url = Uri.parse('https://api.totomonkey.com/api/games/requesttoGame');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) {
+      throw Exception("Token is not available");
+    }
+
     try {
-      final result = await GameApiService()
-          .postRequestData(route: "/games/platformTypeGames", data: data);
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'slug':
+              slug, // Make sure the key is a string and the value is the variable
+        }),
+      );
 
-      final response = jsonDecode(result.body);
-      final url = response["url"];
-      final code = response["code"];
+      final responseData = jsonDecode(response.body);
 
-      print(code);
+      final String? gameUrl = responseData['response_url']['data']['url'];
+      print("+++++++==========++++++++ $responseData");
 
-      if (url != null) {
-        return Game(url: url); // Return the Game object
+      if (gameUrl != null) {
+        return Game(url: gameUrl); // Return the Game object with the URL
       } else {
-        // Handle specific error codes
-        switch (code) {
-          case 10001:
-            throw ("This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
-          case 10003:
-            throw Exception("Account does not exist");
-          case 10004:
-            throw Exception(
-                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
-          case 10005:
-            throw Exception(
-                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
-          case 10006:
-            throw Exception(
-                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
-          case 10007:
-            throw Exception(
-                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
-          case 10405:
-            throw Exception(
-                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
-          case 10407:
-            throw Exception(
-                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
-          case 10408:
-            throw Exception(
-                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
-          case 10409:
-            throw Exception(
-                "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!");
-          default:
-            throw Exception("Unknown error occurred (code: $code)");
-        }
+        throw Exception("Error fetching game");
       }
     } catch (e) {
-      // print("Error fetching game: $e");
-      // throw Exception("Error fetching game: $e");
-      throw "This platform is currently under maintenance. We'll be back shortly. Thank you for your patience!"; // Directly rethrowing the original error instead of wrapping it
+      throw Exception("Error fetching game: $e");
     }
   }
 
@@ -148,55 +117,6 @@ class _HtmlPageState extends State<HtmlPage> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => pages[index]),
-    );
-  }
-
-  // Function to show a popup (AlertDialog) when there's an error
-  void _showErrorDialog(String errorMessage) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text(
-            "Error",
-            style: TextStyle(
-              color: Colors.red,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          content: Text(
-            "Game is under upgrade. Please try again later.",
-            style: TextStyle(
-              color: mainColor,
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Row(
-                children: [
-                  Text("OK"),
-                  SizedBox(
-                    width: 20,
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const GamesPage()),
-                      );
-                    },
-                    child: Text('Back'),
-                  )
-                ],
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -254,17 +174,13 @@ class _HtmlPageState extends State<HtmlPage> {
               child: Image.asset('assets/images/logo_game.png'),
             );
           } else if (snapshot.hasError) {
-            // Extract error message from the Exception
             String errorMessage = snapshot.error.toString();
             if (errorMessage.contains("Exception: ")) {
-              errorMessage = errorMessage
-                  .split("Exception: ")
-                  .last; // Get the clean message
+              errorMessage = errorMessage.split("Exception: ").last;
             }
 
             return Builder(
               builder: (context) {
-                // Show SnackBar after the frame is built
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -279,10 +195,8 @@ class _HtmlPageState extends State<HtmlPage> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset('assets/images/logo_game.png'),
-                      const SizedBox(height: 16),
                       Text(
-                        errorMessage, // Show only the cleaned-up error message
+                        errorMessage,
                         style: TextStyle(color: Colors.red, fontSize: 16),
                         textAlign: TextAlign.center,
                       ),
@@ -308,12 +222,12 @@ class _HtmlPageState extends State<HtmlPage> {
               return const Center(child: Text('No game URL found'));
             }
 
-            // Convert String to WebUri safely
+            // Convert game URL string to WebUri
             final WebUri webUri = WebUri(gameUrl);
 
             return InAppWebView(
               initialUrlRequest: URLRequest(
-                url: webUri, // Use WebUri instead of Uri
+                url: webUri, // Use WebUri here
               ),
               onWebViewCreated: (InAppWebViewController controller) {
                 _webViewController = controller;

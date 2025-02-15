@@ -31,14 +31,10 @@ class _DepositPageState extends State<DepositPage>
   final _cryptoFormKey = GlobalKey<FormState>();
   final _fiatFormKey = GlobalKey<FormState>();
 
-  String? selectedCurrency;
+  String? selectedCurrencyId; // Changed to a String to hold currency ID
   String? selectedNetwork;
   String? selectedMethod;
-  // String? _email;
-  // String? _bankName;
-  // String? _branch;
-  // String? _accountNumber;
-  // String? _mobileNumber;
+
   String? _amount;
   int _selectedIndex = 1;
 
@@ -46,12 +42,12 @@ class _DepositPageState extends State<DepositPage>
   bool _isLoggedIn = false; // Simple boolean state
   String? _walletAddress;
   String? _merchantId;
-  int _countdown = 600;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  // }
+  Map<String, String>? selectedPlatform; // It holds the selected platform's map
+  List<Map<String, String>> platformList = [];
+  List<Map<String, String>> currencyOptions = [];
+
+  int _countdown = 600;
 
   @override
   void dispose() {
@@ -66,6 +62,88 @@ class _DepositPageState extends State<DepositPage>
     _checkLoginStatus();
     _checkTokenAndRedirect();
     _checkSession();
+    _getPlatformList();
+    _getCurrencyList();
+  }
+
+  Future<void> _getCurrencyList() async {
+    final url = Uri.parse('https://api.totomonkey.com/api/deposit/getCurrency');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) return;
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+        List<Map<String, String>> currencies = (responseData['data'] as List)
+            .map((item) => {
+                  'id': item['id'].toString(),
+                  'name': item['name'].toString(),
+                })
+            .toList();
+
+        setState(() {
+          currencyOptions = currencies;
+          if (currencyOptions.isNotEmpty) {
+            selectedCurrencyId =
+                currencyOptions.first['id']; // Select the first currency ID
+          }
+        });
+      } else {
+        print('Failed to fetch currency list: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching currency list: $e');
+    }
+  }
+
+  Future<void> _getPlatformList() async {
+    final url = Uri.parse('https://api.totomonkey.com/api/games/gamePltfmAll');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) return;
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+
+        List<Map<String, String>> platforms = (responseData['data'] as List)
+            .map((item) => {
+                  'id': item['id'].toString(),
+                  'name': item['name'].toString(),
+                })
+            .toList();
+
+        setState(() {
+          platformList = platforms;
+          if (platformList.isNotEmpty) {
+            selectedPlatform =
+                platformList.first; // Select the first platform by default
+          }
+        });
+      } else {
+        print('Failed to fetch platform list: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching platform list: $e');
+    }
   }
 
   /// Check if session data exists
@@ -79,12 +157,11 @@ class _DepositPageState extends State<DepositPage>
 
       if (endTime > currentTime) {
         Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-              builder: (context) => DepositAddress(
-                    deposit: "0",
-                  )),
-        );
+            context,
+            MaterialPageRoute(
+                builder: (context) => DepositAddress(
+                      deposit: "0",
+                    )));
       }
     }
   }
@@ -107,12 +184,12 @@ class _DepositPageState extends State<DepositPage>
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please Complate Your Login.'),
+          content: Text('Please Complete Your Login.'),
           backgroundColor: Colors.red,
           duration: Duration(seconds: 3),
         ),
       );
-    } else {}
+    }
   }
 
   Future<void> _sendDepositRequest() async {
@@ -120,26 +197,32 @@ class _DepositPageState extends State<DepositPage>
         Uri.parse('https://api.totomonkey.com/api/deposit/sendDepositRequest');
     final token = await _secureStorage.read(key: 'access_token');
 
+    print(
+        "========= $selectedPlatform ============= $_amount ++++++++++++++ $selectedCurrencyId");
+
     try {
-      // print(token);
       final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // Add Authorization header
+          'Authorization': 'Bearer $token',
         },
-        body: jsonEncode({'amount': _amount}),
+        body: jsonEncode({
+          "gamingPltform": selectedPlatform!['id'], // Use platform ID
+          'amount': _amount,
+          'currency': selectedCurrencyId,
+        }),
       );
 
       if (response.statusCode == 200) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-              builder: (context) => DepositAddress(
-                    deposit: "${response.body}",
-                  )),
+            builder: (context) => DepositAddress(
+              deposit: "${response.body}",
+            ),
+          ),
         );
-        // print('Deposit successful: ${response.body}');
       } else {
         print('Deposit failed: ${response.statusCode} - ${response.body}');
       }
@@ -149,10 +232,6 @@ class _DepositPageState extends State<DepositPage>
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
     List<Widget> pages = [
       const reelsPage(),
       const GamesPage(),
@@ -165,16 +244,6 @@ class _DepositPageState extends State<DepositPage>
       MaterialPageRoute(builder: (context) => pages[index]),
     );
   }
-
-  final List<String> currencyOptions = ['Bitcoin', 'Ethereum', 'Litecoin'];
-  final List<String> networkOptions = ['ERC20', 'TRC20'];
-  final List<String> methodOptions = [
-    'Bank',
-    'PayPal',
-    'Stripe',
-    'Payoneer',
-    'Mobile Banking'
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -224,10 +293,8 @@ class _DepositPageState extends State<DepositPage>
       ),
       backgroundColor: const Color.fromRGBO(35, 38, 38, 1),
       body: Column(
-        // controller: _tabController,
         children: [
           _buildCryptoDeposit(),
-          // _buildFiatDeposit(),
         ],
       ),
     );
@@ -241,9 +308,49 @@ class _DepositPageState extends State<DepositPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            const SizedBox(height: 10),
+            DropdownButtonFormField<Map<String, String>>(
+              value: selectedPlatform,
+              onChanged: (value) {
+                setState(() {
+                  selectedPlatform = value;
+                });
+              },
+              items: platformList.map((platform) {
+                return DropdownMenuItem<Map<String, String>>(
+                  value: platform,
+                  child: Text(platform['name']!),
+                );
+              }).toList(),
+              decoration: const InputDecoration(
+                labelText: 'Platform List',
+                filled: true,
+                fillColor: Color.fromRGBO(41, 45, 46, 1),
+                labelStyle: TextStyle(color: Colors.white),
+                border: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.white),
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
+            DropdownButtonFormField<String>(
+              value: selectedCurrencyId,
+              onChanged: (value) {
+                setState(() {
+                  selectedCurrencyId = value;
+                });
+              },
+              items: currencyOptions.map((currency) {
+                return DropdownMenuItem<String>(
+                  value: currency['id'],
+                  child: Text(currency['name']!),
+                );
+              }).toList(),
+              decoration: _inputDecoration('Currency List'),
+            ),
             TextFormField(
               decoration: _inputDecoration('Amount'),
-              style: const TextStyle(color: Colors.white), // Input text color
+              style: const TextStyle(color: Colors.white),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter the amount';
@@ -260,14 +367,13 @@ class _DepositPageState extends State<DepositPage>
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                // print(_amount);
                 if (_cryptoFormKey.currentState!.validate()) {
                   _sendDepositRequest();
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Set the button color
-                minimumSize: const Size(double.infinity, 50), // Full width
+                backgroundColor: Colors.blue,
+                minimumSize: const Size(double.infinity, 50),
               ),
               child: const Text(
                 'Deposit',
@@ -280,124 +386,6 @@ class _DepositPageState extends State<DepositPage>
     );
   }
 
-  // Widget _buildFiatDeposit() {
-  //   return Padding(
-  //     padding: const EdgeInsets.all(16.0),
-  //     child: Form(
-  //       key: _fiatFormKey,
-  //       child: Column(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           TextFormField(
-  //             decoration: _inputDecoration('Amount'),
-  //             validator: (value) {
-  //               if (value == null || value.isEmpty) {
-  //                 return 'Please enter the amount';
-  //               }
-  //               return null;
-  //             },
-  //             keyboardType: TextInputType.number,
-  //             onChanged: (value) {
-  //               _amount = value;
-  //             },
-  //           ),
-  //           const SizedBox(height: 16),
-  //           _buildDropdownField('Method', selectedMethod, methodOptions,
-  //               (value) {
-  //             setState(() {
-  //               selectedMethod = value;
-  //             });
-  //           }),
-  //           if (selectedMethod == 'Bank') ...[
-  //             const SizedBox(height: 16),
-  //             _buildTextField('Bank Name', (value) {
-  //               _bankName = value;
-  //             }),
-  //             const SizedBox(height: 16),
-  //             _buildTextField('Branch', (value) {
-  //               _branch = value;
-  //             }),
-  //             const SizedBox(height: 16),
-  //             _buildTextField('Account Number', (value) {
-  //               _accountNumber = value;
-  //             }),
-  //           ] else if (selectedMethod != 'Mobile Banking') ...[
-  //             const SizedBox(height: 16),
-  //             _buildTextField('Email', (value) {
-  //               _email = value;
-  //             }, isEmail: true),
-  //           ] else ...[
-  //             const SizedBox(height: 16),
-  //             _buildTextField('Mobile Number', (value) {
-  //               _mobileNumber = value;
-  //             }),
-  //           ],
-  //           const SizedBox(height: 16),
-  //           ElevatedButton(
-  //             onPressed: () {
-  //               if (_fiatFormKey.currentState!.validate()) {
-  //                 // Handle fiat deposit action
-  //                 print('Submitting Fiat Deposit:');
-  //                 // print('Method: $selectedMethod');
-  //                 // print('Amount: $_amount');
-  //                 // print('Email: $_email');
-  //                 // print('Bank Name: $_bankName');
-  //                 // print('Branch: $_branch');
-  //                 // print('Account Number: $_accountNumber');
-  //                 // print('Mobile Number: $_mobileNumber');
-  //               }
-  //             },
-  //             style: ElevatedButton.styleFrom(
-  //               backgroundColor: mainColor, // Set the button color
-  //               minimumSize: const Size(double.infinity, 50), // Full width
-  //             ),
-  //             child: const Text(
-  //               'Deposit',
-  //               style: TextStyle(color: Colors.white),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
-
-  Widget _buildDropdownField(String label, String? selectedValue,
-      List<String> options, ValueChanged<String?> onChanged) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
-      child: DropdownButtonFormField<String>(
-        value: selectedValue,
-        onChanged: onChanged,
-        items: options.map((String value) {
-          return DropdownMenuItem<String>(
-            value: value,
-            child: Text(value, style: const TextStyle(color: Colors.white)),
-          );
-        }).toList(),
-        decoration: _inputDecoration(label),
-        dropdownColor: secondaryColor,
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, ValueChanged<String?> onChanged,
-      {bool isEmail = false}) {
-    return TextFormField(
-      decoration: _inputDecoration(label),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
-        }
-        if (isEmail && !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-          return 'Please enter a valid email';
-        }
-        return null;
-      },
-      onChanged: onChanged,
-    );
-  }
-
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
@@ -405,12 +393,6 @@ class _DepositPageState extends State<DepositPage>
       filled: true,
       fillColor: secondaryColor,
       border: const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.white),
-      ),
-      enabledBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.white),
-      ),
-      focusedBorder: const OutlineInputBorder(
         borderSide: BorderSide(color: Colors.white),
       ),
     );

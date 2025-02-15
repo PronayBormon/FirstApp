@@ -8,6 +8,7 @@ import 'package:homepage_project/pages/game_list.dart';
 import 'package:homepage_project/pages/hoster-list.dart';
 import 'package:homepage_project/pages/play-Game.dart';
 import 'package:homepage_project/pages/reels.dart';
+import 'package:homepage_project/pages/user/affiliate.dart';
 import 'package:homepage_project/pages/user/deposit.dart';
 import 'package:homepage_project/pages/user/personal-details.dart';
 import 'package:homepage_project/pages/user/profile.dart';
@@ -88,7 +89,9 @@ class _GamesPageState extends State<GamesPage> {
   late Future<List<Game>> _futureGames;
   late Future<List<GameType>> _futureGameTypes;
   String _selectedFilter = "4"; // Default game type ID
+  String? _searchText; // Default game type ID
   bool _isLoggedIn = false; // Simple boolean state
+  Future<List<GameplatformsList>>? _futureProviders;
 
   @override
   void initState() {
@@ -96,22 +99,95 @@ class _GamesPageState extends State<GamesPage> {
     _futureGameTypes = fetchGameTypes();
     _futureGames = fetchGamesByType(_selectedFilter);
     _checkLoginStatus();
+    _futureProviders = _fetchGameTypes(); // Fetch providers dynamically
+    _checkTokenAndRedirect();
   }
 
+  void _checkTokenAndRedirect() async {
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignIn()),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please Complete Your Login.'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+// Fetch game platforms (providers)
+  Future<List<GameplatformsList>> _fetchGameTypes() async {
+    final url = Uri.parse('https://api.totomonkey.com/api/games/gamePltfmAll');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) return []; // Return an empty list if no token
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final data = responseData["data"] as List?;
+        print(data);
+        return data?.map((json) => GameplatformsList.fromJson(json)).toList() ??
+            [];
+      }
+    } catch (e) {
+      print('Error fetching game types: $e');
+    }
+    return []; // Return empty list on error
+  }
+
+// Fetch all game types
   Future<List<GameType>> fetchGameTypes() async {
     final response = await http.get(
       Uri.parse('https://api.totomonkey.com/api/public/allGamesType'),
     );
+
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(response.body);
       if (jsonResponse['success']) {
-        var data = jsonResponse['data'];
-        if (data is List) {
-          return data.map((json) => GameType.fromJson(json)).toList();
-        }
+        final data = jsonResponse['data'] as List?;
+        return data?.map((json) => GameType.fromJson(json)).toList() ?? [];
       }
     }
     throw Exception('Failed to load game types');
+  }
+
+// Fetch games by type and search filter
+  Future<List<Game>> fetchGamesByTypeSearch(
+      String gameTypeId, String slug) async {
+    final response = await http.get(
+      Uri.parse(
+          'https://api.totomonkey.com/api/public/gameTypeWisePlatformList?game_type_id=$gameTypeId&slug=$slug'),
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      if (jsonResponse['success']) {
+        final data = jsonResponse['data'] as List?;
+        if (data != null) {
+          print("********************* $data");
+          setState(() {
+            _futureGames =
+                Future.value(data.map((json) => Game.fromJson(json)).toList());
+          });
+        }
+      }
+    }
+    return Future.value([]); // Return an empty list if no results
   }
 
   Future<List<Game>> fetchGamesByType(String gameTypeId) async {
@@ -201,200 +277,32 @@ class _GamesPageState extends State<GamesPage> {
       body: CustomScrollView(
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                childAspectRatio: 1.25,
-                crossAxisSpacing: 3,
-                mainAxisSpacing: 3,
-              ),
-              delegate: SliverChildListDelegate(
-                [
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PersonalDetails(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.person,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Personal Details",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
+            padding:
+                const EdgeInsets.only(top: 0, left: 20, right: 20, bottom: 5),
+            sliver: SliverToBoxAdapter(
+              child: GestureDetector(
+                onTap: () {
+                  // Navigate to AffiliatePage when tapped
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const AffiliatePage()),
+                  );
+                },
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Container(
+                    width: double.infinity,
+                    height: 150, // Adjust the height as needed
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      'assets/images/bonusBannar.jpg',
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const GameListPage(
-                            gameCode: "cc01",
-                          ),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.gamepad_rounded,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Games Platform",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HosterListPage(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.videocam,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Hosters",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const WalletPage(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.account_balance_wallet,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Wallet",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DepositPage(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.download,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Deposit",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const WithdrawPage(),
-                        ),
-                      ),
-                    },
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (Rect bounds) {
-                            return pinkGradient.createShader(bounds);
-                          },
-                          child: const Icon(Icons.upload,
-                              size: 25, color: Colors.white),
-                        ),
-                        const SizedBox(height: 5),
-                        const Text("Withdraw",
-                            textAlign:
-                                TextAlign.center, // Align text to the center
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                            )),
-                      ],
-                    ),
-                  ),
-                  //
-                ],
+                ),
               ),
             ),
           ),
@@ -421,6 +329,152 @@ class _GamesPageState extends State<GamesPage> {
             ),
           ),
           SliverPadding(
+            padding: EdgeInsets.all(20),
+            sliver: SliverToBoxAdapter(
+              child: Container(
+                margin: EdgeInsets.only(right: 10),
+                height: 60,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Dropdown for Providers (Fetched from API)
+                    Container(
+                      alignment: Alignment(0, 0),
+                      width: deviceWidth(context) *
+                          .4, // Adjust the width as needed
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: secondaryColor,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.white, // Border color
+                          width: 1, // Border width
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: FutureBuilder<List<GameplatformsList>>(
+                          future: _futureProviders,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return Center(child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(
+                                  child: Text("Error loading providers"));
+                            } else if (!snapshot.hasData ||
+                                snapshot.data!.isEmpty) {
+                              return Center(
+                                  child: Text("No providers available"));
+                            }
+
+                            List<GameplatformsList> providers = snapshot.data!;
+                            return DropdownButton<String>(
+                              value: 'All Provider',
+                              items: [
+                                DropdownMenuItem(
+                                  value: 'All Provider',
+                                  child: Text(
+                                    'All Provider',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                                ...providers.map((provider) {
+                                  return DropdownMenuItem<String>(
+                                    value: provider.slug,
+                                    child: Text(
+                                      provider.name,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  );
+                                }).toList(),
+                              ],
+                              onChanged: (newValue) {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            GamesPlatform(dSlug: newValue)));
+                                // print("Selected Provider: $newValue");
+                              },
+                              dropdownColor: secondaryColor,
+                              underline: SizedBox(), // Remove the underline
+                              icon: Icon(Icons.arrow_drop_down,
+                                  color: Colors.white),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // Search TextField with Button
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.only(left: 10),
+                        width: deviceWidth(context) * .5,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: secondaryColor,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.white, // Border color
+                            width: 1, // Border width
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                decoration: InputDecoration(
+                                  hintText: "Search provider",
+                                  hintStyle: TextStyle(color: Colors.white60),
+                                  filled: true,
+                                  fillColor: secondaryColor,
+                                  border:
+                                      InputBorder.none, // Removes the border
+                                  contentPadding:
+                                      EdgeInsets.symmetric(horizontal: 10),
+                                ),
+                                style: TextStyle(color: Colors.white),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _searchText = value;
+                                  });
+                                  // Handle text change (optional for live search)
+                                },
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.search, color: Colors.white),
+                              onPressed: () {
+                                print(
+                                    "$_selectedFilter ++++++++++++++ $_searchText");
+                                if (_selectedFilter?.isNotEmpty == true &&
+                                    _searchText?.isNotEmpty == true) {
+                                  fetchGamesByTypeSearch(
+                                      _selectedFilter!, _searchText!);
+                                } else {
+                                  // Show a message or handle empty input case
+                                  print("Please enter a valid search query");
+                                }
+                                print(
+                                    "$_searchText ============= $_selectedFilter");
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          SliverPadding(
             padding: const EdgeInsets.all(20),
             sliver: FutureBuilder<List<GameType>>(
               future: _futureGameTypes,
@@ -429,7 +483,7 @@ class _GamesPageState extends State<GamesPage> {
                   return SliverGrid(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
+                      crossAxisCount: 5,
                       childAspectRatio: 1,
                       crossAxisSpacing: 10,
                       mainAxisSpacing: 10,
@@ -464,24 +518,156 @@ class _GamesPageState extends State<GamesPage> {
                 } else if (snapshot.hasData) {
                   final gameTypes = snapshot.data!;
                   return SliverToBoxAdapter(
-                    child: Container(
-                      padding: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white10, // Set the background color here
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: List.generate(
-                            gameTypes.length,
-                            (index) {
-                              final gameType = gameTypes[index];
-                              return _buildGameTypeItem(gameType);
-                            },
+                    child: Column(
+                      children: [
+                        Container(
+                          // padding: EdgeInsets.all(10),
+                          // decoration: BoxDecoration(
+                          //   color:
+                          //       Colors.white10, // Set the background color here
+                          //   borderRadius: BorderRadius.circular(10),
+                          // ),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: List.generate(
+                                gameTypes.length,
+                                (index) {
+                                  final gameType = gameTypes[index];
+                                  return Column(
+                                    children: [
+                                      if (_selectedFilter == gameType.id)
+                                        Container(
+                                          margin: EdgeInsets.only(right: 10),
+                                          decoration: BoxDecoration(
+                                            color: mainColor,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: Padding(
+                                            padding: EdgeInsets.all(10),
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _selectedFilter = gameType.id;
+                                                  _futureGames =
+                                                      fetchGamesByType(
+                                                          _selectedFilter);
+                                                });
+                                              },
+                                              child: Column(
+                                                children: [
+                                                  Container(
+                                                    width: 50,
+                                                    child: Container(
+                                                      // padding: EdgeInsets.only(left: 15, right: 15),
+                                                      width:
+                                                          50, // Set a fixed width for the image
+                                                      height:
+                                                          50, // Set a fixed height for the image
+                                                      child: ClipOval(
+                                                        child: Container(
+                                                          height:
+                                                              double.infinity,
+                                                          width: 25,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        50),
+                                                          ),
+                                                          child: Image.network(
+                                                            gameType.imagepath,
+                                                            fit: BoxFit.cover,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    gameType.name,
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      else
+                                        Container(
+                                          margin: EdgeInsets.only(right: 10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white12,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                          ),
+                                          child: Padding(
+                                            padding: EdgeInsets.all(10),
+                                            child: GestureDetector(
+                                              onTap: () {
+                                                setState(() {
+                                                  _selectedFilter = gameType.id;
+                                                  _futureGames =
+                                                      fetchGamesByType(
+                                                          _selectedFilter);
+                                                });
+                                              },
+                                              child: Column(
+                                                children: [
+                                                  Container(
+                                                    width: 50,
+                                                    child: Container(
+                                                      // padding: EdgeInsets.only(left: 15, right: 15),
+                                                      width:
+                                                          50, // Set a fixed width for the image
+                                                      height:
+                                                          50, // Set a fixed height for the image
+                                                      child: ClipOval(
+                                                        child: Container(
+                                                          height:
+                                                              double.infinity,
+                                                          width: 25,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        50),
+                                                          ),
+                                                          child: Image.network(
+                                                            gameType.imagepath,
+                                                            fit: BoxFit.cover,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    gameType.name,
+                                                    style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 12),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   );
                 } else {
@@ -492,6 +678,28 @@ class _GamesPageState extends State<GamesPage> {
               },
             ),
           ),
+          SliverToBoxAdapter(
+              child: Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 0,
+              bottom: 10,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Providers",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          )),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: FutureBuilder<List<Game>>(
@@ -538,53 +746,60 @@ class _GamesPageState extends State<GamesPage> {
                 return SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    childAspectRatio: .90,
+                    childAspectRatio: .75,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final game = games[index];
-                      return GestureDetector(
-                        onTap: () => _onGameTapped(game),
-                        child: Container(
-                          decoration: BoxDecoration(
-                              color: secondaryColor,
-                              borderRadius: BorderRadius.circular(10)),
-                          child: Column(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(12),
-                                  topRight: Radius.circular(12),
-                                ),
-                                child: Container(
-                                  color: Colors.white,
-                                  child: Image.network(
-                                    game.imagePath,
-                                    fit: BoxFit.cover,
-                                    height: 85,
-                                    width: double.infinity,
+                      return Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () => _onGameTapped(game),
+                            child: Container(
+                              // decoration: BoxDecoration(
+                              //   color: secondaryColor,
+                              //   // borderRadius: BorderRadius.circular(10),
+                              // ),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                          10), // Match the container's border radius
+                                      child: Image.network(
+                                        game.imagePath,
+                                        fit: BoxFit.cover,
+                                        // height: 65,
+                                        // width: 60,
+                                        width: double.infinity,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  game.name,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      game.name,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                          )
+                        ],
                       );
                     },
                     childCount: games.length,
@@ -597,102 +812,6 @@ class _GamesPageState extends State<GamesPage> {
             padding: EdgeInsets.all(10),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGameTypeList(List<GameType> gameTypes) {
-    return SizedBox(
-      height: 60,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: gameTypes.length,
-        itemBuilder: (context, index) {
-          final gameType = gameTypes[index];
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedFilter = gameType.id;
-                _futureGames = fetchGamesByType(_selectedFilter);
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 8,
-              ),
-              margin: const EdgeInsets.symmetric(
-                horizontal: 4,
-              ),
-              decoration: BoxDecoration(
-                gradient: _selectedFilter == gameType.id ? pinkGradient : null,
-                borderRadius: BorderRadius.circular(16),
-                color: _selectedFilter == gameType.id
-                    ? null
-                    : Colors.grey.shade800,
-              ),
-              child: Center(
-                child: Text(
-                  gameType.name,
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildGameTypeItem(GameType gameType) {
-    return Container(
-      margin: EdgeInsets.only(right: 10),
-      decoration: BoxDecoration(
-        color: Colors.white12,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(10),
-        child: GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedFilter = gameType.id;
-              _futureGames = fetchGamesByType(_selectedFilter);
-            });
-          },
-          child: Column(
-            children: [
-              Container(
-                width: 80,
-                child: Container(
-                  padding: EdgeInsets.only(left: 15, right: 15),
-                  width: 50, // Set a fixed width for the image
-                  height: 50, // Set a fixed height for the image
-                  child: ClipOval(
-                    child: Container(
-                      height: 30,
-                      width: 30,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      child: Image.network(
-                        gameType.imagepath,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Text(
-                gameType.name,
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

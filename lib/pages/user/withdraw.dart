@@ -34,11 +34,11 @@ class _WithdrawPageState extends State<WithdrawPage> {
   int _selectedIndex = 2; // Default to Home
   Map<String, String>? selectedPlatform;
   Map<String, String>? selectedCurrency;
+  List<Map<String, String>> currencyOptions = [];
   bool? _isLoggedIn = false;
   String? userCurrency;
   int? userBalance;
   List<Map<String, String>> platformList = [];
-  List<Map<String, String>> currencyOptions = [];
 
   @override
   void initState() {
@@ -294,21 +294,6 @@ class _WithdrawPageState extends State<WithdrawPage> {
             ),
           ),
         ),
-        // actions: [
-        //   Builder(
-        //     builder: (context) => IconButton(
-        //       icon: SvgPicture.asset(
-        //         'assets/icons/menu.svg',
-        //         color: Colors.white,
-        //         height: 25,
-        //         width: 25,
-        //       ),
-        //       onPressed: () {
-        //         Scaffold.of(context).openDrawer();
-        //       },
-        //     ),
-        //   ),
-        // ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,

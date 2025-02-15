@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:homepage_project/pages/authentication/signin.dart';
 import 'package:homepage_project/pages/user/profile.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 const mainColor = Color.fromRGBO(255, 31, 104, 1.0);
 const primaryColor = Color.fromRGBO(35, 38, 38, 1);
@@ -36,6 +38,49 @@ class _AppBarWidgetState extends State<AppBarWidget> {
   void initState() {
     super.initState();
     _checkLoginStatus();
+    _getBalance();
+  }
+
+// https://api.totomonkey.com/api/balance/getCurrentBalance
+  Future<void> _getBalance() async {
+    final url =
+        Uri.parse('https://api.totomonkey.com/api/balance/getCurrentBalance');
+    final token = await _secureStorage.read(key: 'access_token');
+
+    if (token == null) {
+      print("Token is not available");
+      return; // If the token is not available, exit early
+    }
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Parse the response
+        final responseData = jsonDecode(response.body);
+        // Assuming the balance is under 'data' -> 'balance'
+        final balance = responseData['data']['balance'];
+
+        // Ensure balance is a double, whether it's an int or already a double
+        double availableBalance =
+            (balance is int) ? balance.toDouble() : balance;
+
+        setState(() {
+          _availableBalance = availableBalance;
+          print('Current Balance: $_availableBalance');
+        });
+      } else {
+        print('Failed to fetch balance: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error fetching balance: $e');
+    }
   }
 
   // Check if the token exists and update state
@@ -43,15 +88,11 @@ class _AppBarWidgetState extends State<AppBarWidget> {
     final token = await _secureStorage.read(key: 'access_token');
     final username = await _secureStorage.read(key: 'username');
     final email = await _secureStorage.read(key: 'email');
-    final available_balance =
-        await _secureStorage.read(key: 'available_balance');
 
     setState(() {
       _isLoggedIn = token != null;
       _userName = username;
       _email = email;
-      _availableBalance =
-          available_balance != null ? double.tryParse(available_balance) : null;
     });
   }
 
@@ -87,6 +128,7 @@ class _AppBarWidgetState extends State<AppBarWidget> {
                             fontSize: 12,
                           ),
                         ),
+                        // Text("$_availableBalance"),
 
                         // Showing the balance dynamically
                         Text(
